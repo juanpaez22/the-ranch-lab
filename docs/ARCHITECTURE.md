@@ -15,7 +15,7 @@ Living notes, expected to evolve as the lab is built. Planned roles below are pr
 
 - Earlier lab notes recorded DHCP reservations and successful SSH between the three named machines on 2026-08-30. These were not reverified during repository bootstrap.
 - Post-reboot SSH and installed lid settings were verified on 2026-09-07; the owner also confirmed SSH with lids closed. Package-update completeness has not been audited.
-- No k3s installation is recorded as completed.
+- K3s v1.36.4+k3s1 is installed: bronco is the server, yeti the agent. Both were verified Ready from the workstation's WSL client on 2026-09-07; packaged pods were healthy and install jobs completed. Owner-provided output confirmed secrets encryption enabled. See [cluster access](CLUSTER_ACCESS.md).
 
 ## Initial SSH preflight: 2026-09-07 (resolved)
 

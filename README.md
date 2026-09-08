@@ -6,6 +6,7 @@ A simple homelab repository for sharing operational scripts, documenting progres
 - [Backlog](docs/BACKLOG.md): next steps and ideas.
 - [Ubuntu preflight](docs/UBUNTU_PREFLIGHT.md): updates and laptop lid configuration.
 - [K3s installation](docs/K3S_INSTALL.md): pinned bootstrap and rebuild procedure.
+- [Cluster access](docs/CLUSTER_ACCESS.md): administration from laptops and PowerShell/WSL.
 - `scripts/`: operational scripts.
 - `configs/`: reusable configuration files.
 - `logs/`: session notes and outcomes.
