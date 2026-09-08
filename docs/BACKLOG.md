@@ -4,14 +4,14 @@ Ideas are candidates, not commitments. Move items forward when there is a useful
 
 ## Next steps
 
-- [ ] Complete Ubuntu updates on both laptops and record outcomes.
-- [x] Apply and validate the [lid configuration](UBUNTU_PREFLIGHT.md). Owner confirmed closed-lid SSH; installed settings verified after reboot.
-- [ ] Verify SSH after reboot and hostnames from Linux, Windows, and WSL.
-- [ ] Inspect CPU, disk, networking, and available resources before cluster installation.
-- [ ] Decide cluster networking ranges, endpoint, initial storage, and backup procedure.
-  - See the [k3s readiness review and proposed decisions](K3S_PLAN.md).
-- [ ] Install k3s on `bronco`, run a test service, then join `yeti`.
+- [ ] Deploy a disposable application and verify cross-node pod networking, DNS, and LAN ingress.
 - [ ] Test service placement, node downtime, and recovery.
+- [ ] Review live firewall rules and scope cluster access to lab peers.
+- [ ] Recheck network stability if the brief SSH/cluster interruption recurs; its cause remains unknown.
+- [ ] Audit remaining package updates if needed; both laptops rebooted successfully, but update completeness was not independently verified.
+- [ ] Before adding workers, review VPN/WSL route overlap and standard LAN DNS options.
+
+Bootstrap, lid behavior, hardware inventory, and workstation administration are complete; see [architecture](ARCHITECTURE.md) and [setup](SETUP.md). Application-level validation remains separate from node readiness.
 
 ## Platform experiments
 

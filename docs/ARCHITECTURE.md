@@ -1,70 +1,47 @@
 # Architecture
 
-Living notes, expected to evolve as the lab is built. Planned roles below are proposals, not evidence of deployed services.
+Current setup verified on 2026-09-07. Procedures live in [SETUP.md](SETUP.md); future work lives in [BACKLOG.md](BACKLOG.md).
 
 ## Machines
 
-| Host | Current machine | Proposed role |
+| Host | Hardware | Current role |
 | --- | --- | --- |
-| `bronco` | Ubuntu laptop, 16 GB RAM | Always-on k3s server and worker |
-| `yeti` | Ubuntu laptop, 8 GB RAM | Always-on k3s worker; constrained agent experiments |
-| `longhorn` | Windows 11 workstation with WSL2 and NVIDIA GPU | Gaming, local inference, optional CPU-only WSL worker |
-| Undecided | Optional Raspberry Pi | Lightweight ARM worker |
+| `bronco` | HP EliteBook x360 1030 G3; i7-8650U, 4 cores / 8 threads; 14 GiB OS-visible RAM; Toshiba 476.9 GiB NVMe | k3s server and workloads |
+| `yeti` | HP Spectre x360 Convertible 13-w0XX; i7-7500U, 2 cores / 4 threads; 7.1 GiB OS-visible RAM; Samsung 238.5 GiB NVMe | k3s agent |
+| `longhorn` | Windows 11 workstation, WSL2, NVIDIA GPU | Gaming/workstation; cluster administration through WSL |
 
-## Reported baseline
+Both laptops run Ubuntu 26.04.1 LTS, x86_64, kernel `7.0.0-31-generic`, with 4 GiB host swap retained. Hardware inventory was read over SSH. Post-install root filesystem availability was approximately 431 GiB on bronco and 210 GiB on yeti.
 
-- Earlier lab notes recorded DHCP reservations and successful SSH between the three named machines on 2026-08-30. These were not reverified during repository bootstrap.
-- Post-reboot SSH and installed lid settings were verified on 2026-09-07; the owner also confirmed SSH with lids closed. Package-update completeness has not been audited.
-- K3s v1.36.4+k3s1 is installed: bronco is the server, yeti the agent. Both were verified Ready from the workstation's WSL client on 2026-09-07; packaged pods were healthy and install jobs completed. Owner-provided output confirmed secrets encryption enabled. See [cluster access](CLUSTER_ACCESS.md).
+An optional Pi worker, WSL worker, and GPU integration are future experiments. WSL currently administers the cluster; it is not a node.
 
-## Initial SSH preflight: 2026-09-07 (resolved)
+## Cluster decisions
 
-- Both bare hostnames resolved from the Windows workstation during an SSH attempt.
-- `bronco` reached SSH authentication but rejected the available noninteractive authentication.
-- `yeti` lacked a trusted host-key entry for the requested hostname; strict verification stopped the connection.
-- Neither the Windows nor default WSL user's SSH directory contained a private-key file. Password login may have been used previously; this was not verified.
-- No remote inspection commands executed. CPU, disk, OS release, and live memory details remain unverified; the machine table above reflects prior planning notes.
-- Subsequently resolved: after the owner configured key authentication, both hosts accepted noninteractive SSH with strict host-key checking. See the verified inventory below.
+- **Version:** k3s `v1.36.4+k3s1`, pinned in [version.txt](../configs/k3s/version.txt); standalone kubectl `v1.36.4`.
+- **Topology:** one server on bronco and one agent on yeti. SQLite datastore; no control-plane high availability.
+- **Networking:** default IPv4 Flannel VXLAN, pod range `10.42.0.0/16`, service range `10.43.0.0/16`. These are cluster defaults, not published host addresses.
+- **Components:** bundled containerd, CoreDNS, Traefik, ServiceLB, metrics-server, and network policy. Traefik/ServiceLB uses node ports 80/443 for ingress.
+- **Overrides:** server TLS SAN `bronco.local` and secrets encryption enabled. Host swap remains enabled; no separate pod-swap experiment.
+- **Storage:** default local-path volumes. Data belongs to its node and does not automatically move with workloads.
+- **Recovery:** no backups initially by explicit choice. Rebuild scripts reproduce infrastructure; cluster state, secrets, and application data are disposable.
 
-## Verified laptop inventory: 2026-09-07
+## Access and networking
 
-Collected via read-only SSH after key setup. No packages or host settings were changed by the inspection.
+Both laptops currently use Wi-Fi and DHCP reservations. Public documentation uses hostnames; actual LAN addresses belong only in private installed configuration or ignored local inventory.
 
-| Specification | `bronco` | `yeti` |
-| --- | --- | --- |
-| Model | HP EliteBook x360 1030 G3 | HP Spectre x360 Convertible 13-w0XX |
-| CPU | Intel Core i7-8650U, 4 cores / 8 threads | Intel Core i7-7500U, 2 cores / 4 threads |
-| Architecture | x86_64 | x86_64 |
-| OS-reported usable RAM (`free -h`) | 14 GiB | 7.1 GiB |
-| Swap configured | 4 GiB | 4 GiB |
-| NVMe disk | Toshiba KXG50ZNV512G, 476.9 GiB | Samsung MZVLW256HEHP-000H1, 238.5 GiB |
-| Root filesystem available at inspection | 432 GiB | 210 GiB |
-| OS | Ubuntu 26.04.1 LTS | Ubuntu 26.04.1 LTS |
-| Running kernel | 7.0.0-29-generic | 7.0.0-30-generic |
-| Failed system services | `grub2-common.service` | None |
-| Reboot-required marker | Present | Present |
+Windows resolves bare laptop names. Linux shell tools resolve their peers through mDNS `.local`, but the agent failed to join using that resolver path. The installed agent and remote kubeconfigs now use bronco's reserved IPv4 address. The public agent template prompts for the address rather than storing it. The server's additional TLS SAN can remain.
 
-Both machines were reachable by bare hostname from Windows. Both reported approximately one hour of uptime. Neither exposed a `k3s` executable in the SSH command's PATH; this is not an exhaustive installation audit.
+Standalone kubectl works without sudo on both laptops using private kubeconfig copies. PowerShell can administer through WSL. Native Windows HTTPS inspection substituted the API certificate; WSL validates the original certificate. No TLS-verification bypass or security-product change was applied. The Windows client remains downloaded but is not on PATH.
 
-The inventory above predates the lid installation and subsequent reboot. Follow-up on 2026-09-07 found both running kernel `7.0.0-31-generic`, no failed system units, and no reboot-required markers. The earlier `grub2-common.service` failure on `bronco` was no longer present; its original cause was not diagnosed. Both have the versioned lid settings installed, and the owner confirmed closed-lid SSH access.
+## Verified state and limits
 
-See [k3s readiness and proposed configuration](K3S_PLAN.md) for the installation preflight.
+- Both nodes Ready; packaged pods Running and installation jobs Completed.
+- Owner output confirmed secrets encryption enabled with matching hashes.
+- Workstation WSL checks confirmed node/pod status and authenticated API readiness `ok`.
+- Laptop SSH survived reboot; matching lid settings were inspected and the owner confirmed access with lids closed.
+- No failed system units or pending reboot markers after laptop preparation. CPU/memory cgroups and required kernel modules were available; time was synchronized. IPv4 forwarding was enabled after installation.
+- A brief connection interruption during agent startup recovered automatically. Neither laptop rebooted or restarted SSH; its exact cause remains unknown. Short peer tests had no loss but variable latency.
+- Dedicated cross-node application traffic, DNS, ingress, node-failure behavior, and full recovery testing remain pending. Live firewall rules and full package-update coverage were not audited.
 
-## Networking
+## References
 
-Use hostnames in shared configuration. Keep actual addresses in an ignored local inventory, such as `local/inventory.md`.
-
-DHCP reservations do not automatically provide DNS. Current checks show Windows can reach both bare hostnames, while the laptops resolve and ping each other using `.local` names only. Previous notes reported that `.local` resolution did not work from WSL's NAT network; this remains an open validation item.
-
-Prefer Ethernet where practical. Begin with LAN access; remote access and public service exposure require separate decisions.
-
-## Evolving direction
-
-- Start with `bronco` as a single k3s server that also runs workloads, then add `yeti` as a worker. This does not provide a highly available control plane.
-- Keep the Windows workstation optional for essential services. Validate WSL as a CPU worker separately from GPU scheduling.
-- Keep standalone inference and Docker Compose available; the inference backend and deployment method remain open.
-- Introduce GitOps and monitoring after a basic workload works across the laptops.
-- Consider Proxmox later if VM isolation becomes useful. Linux VMs can become cluster nodes, but replacing a host requires a migration and data recovery plan.
-- Treat persistent storage and recovery as explicit work. Git preserves configuration, not application data or cluster backups.
-
-Planning context was adapted from existing personal homelab notes during bootstrap; future verified state belongs here.
+[K3s requirements](https://docs.k3s.io/installation/requirements), [network options](https://docs.k3s.io/networking/basic-network-options), [networking services](https://docs.k3s.io/networking/networking-services), [server options](https://docs.k3s.io/cli/server), [SQLite-to-etcd conversion](https://docs.k3s.io/datastore/ha-embedded), [storage](https://docs.k3s.io/add-ons/storage), [backup and restore](https://docs.k3s.io/datastore/backup-restore).
