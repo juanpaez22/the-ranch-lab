@@ -1,0 +1,3 @@
+tls-san:
+  - bronco.local
+secrets-encryption: true
