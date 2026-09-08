@@ -14,7 +14,7 @@ Living notes, expected to evolve as the lab is built. Planned roles below are pr
 ## Reported baseline
 
 - Earlier lab notes recorded DHCP reservations and successful SSH between the three named machines on 2026-08-30. These were not reverified during repository bootstrap.
-- Post-reboot SSH persistence, laptop update completion, and closed-lid operation remain unverified here.
+- Post-reboot SSH and installed lid settings were verified on 2026-09-07; the owner also confirmed SSH with lids closed. Package-update completeness has not been audited.
 - No k3s installation is recorded as completed.
 
 ## Initial SSH preflight: 2026-09-07 (resolved)
@@ -46,13 +46,15 @@ Collected via read-only SSH after key setup. No packages or host settings were c
 
 Both machines were reachable by bare hostname from Windows. Both reported approximately one hour of uptime. Neither exposed a `k3s` executable in the SSH command's PATH; this is not an exhaustive installation audit.
 
-No active `HandleLid*` or `IdleAction` assignments appeared in `systemd-analyze cat-config systemd/logind.conf`. This does not verify closed-lid behavior or desktop power-manager settings. Both laptops still need a planned reboot and follow-up validation; the failed GRUB boot-record service on `bronco` needs diagnosis.
+The inventory above predates the lid installation and subsequent reboot. Follow-up on 2026-09-07 found both running kernel `7.0.0-31-generic`, no failed system units, and no reboot-required markers. The earlier `grub2-common.service` failure on `bronco` was no longer present; its original cause was not diagnosed. Both have the versioned lid settings installed, and the owner confirmed closed-lid SSH access.
+
+See [k3s readiness and proposed configuration](K3S_PLAN.md) for the installation preflight.
 
 ## Networking
 
 Use hostnames in shared configuration. Keep actual addresses in an ignored local inventory, such as `local/inventory.md`.
 
-DHCP reservations do not automatically provide DNS. Verify name resolution from every relevant host before relying on it. Previous notes reported that `.local` resolution did not work from WSL's NAT network; this remains an open validation item.
+DHCP reservations do not automatically provide DNS. Current checks show Windows can reach both bare hostnames, while the laptops resolve and ping each other using `.local` names only. Previous notes reported that `.local` resolution did not work from WSL's NAT network; this remains an open validation item.
 
 Prefer Ethernet where practical. Begin with LAN access; remote access and public service exposure require separate decisions.
 

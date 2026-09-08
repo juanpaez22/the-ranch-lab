@@ -5,10 +5,11 @@ Ideas are candidates, not commitments. Move items forward when there is a useful
 ## Next steps
 
 - [ ] Complete Ubuntu updates on both laptops and record outcomes.
-- [ ] Apply and validate the [lid configuration](UBUNTU_PREFLIGHT.md).
+- [x] Apply and validate the [lid configuration](UBUNTU_PREFLIGHT.md). Owner confirmed closed-lid SSH; installed settings verified after reboot.
 - [ ] Verify SSH after reboot and hostnames from Linux, Windows, and WSL.
 - [ ] Inspect CPU, disk, networking, and available resources before cluster installation.
 - [ ] Decide cluster networking ranges, endpoint, initial storage, and backup procedure.
+  - See the [k3s readiness review and proposed decisions](K3S_PLAN.md).
 - [ ] Install k3s on `bronco`, run a test service, then join `yeti`.
 - [ ] Test service placement, node downtime, and recovery.
 
@@ -41,3 +42,7 @@ Ideas are candidates, not commitments. Move items forward when there is a useful
 - ROS 2 simulation or an embedded sensor project connected to the lab.
 
 Adapted from prior personal project notes. Private datasets and personal workflow details remain outside this repository.
+
+## Saved references
+
+- [Community discussion: help with k3s setup on WSL](https://www.reddit.com/r/kubernetes/comments/1iqqly6/help_with_k3s_setup_on_wsl/), saved 2026-09-07 for the future WSL worker experiment. Community troubleshooting, not an installation authority.
