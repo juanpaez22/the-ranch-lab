@@ -1,0 +1,39 @@
+# Private inventory and machine-specific configuration
+local/
+*.local
+*.local.*
+
+# Secrets and authentication material
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+.ssh/
+.kube/
+*kubeconfig*
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Runtime data, backups, and generated artifacts
+data/
+backups/
+*.bak
+*.log
+tmp/
+dist/
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+
+# Editor and OS state
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
