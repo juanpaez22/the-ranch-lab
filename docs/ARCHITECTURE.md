@@ -17,14 +17,36 @@ Living notes, expected to evolve as the lab is built. Planned roles below are pr
 - Post-reboot SSH persistence, laptop update completion, and closed-lid operation remain unverified here.
 - No k3s installation is recorded as completed.
 
-## SSH preflight: 2026-09-07
+## Initial SSH preflight: 2026-09-07 (resolved)
 
 - Both bare hostnames resolved from the Windows workstation during an SSH attempt.
 - `bronco` reached SSH authentication but rejected the available noninteractive authentication.
 - `yeti` lacked a trusted host-key entry for the requested hostname; strict verification stopped the connection.
 - Neither the Windows nor default WSL user's SSH directory contained a private-key file. Password login may have been used previously; this was not verified.
 - No remote inspection commands executed. CPU, disk, OS release, and live memory details remain unverified; the machine table above reflects prior planning notes.
-- Next: establish an approved authentication method and verify `yeti`'s host fingerprint through a trusted channel, then repeat the read-only inventory.
+- Subsequently resolved: after the owner configured key authentication, both hosts accepted noninteractive SSH with strict host-key checking. See the verified inventory below.
+
+## Verified laptop inventory: 2026-09-07
+
+Collected via read-only SSH after key setup. No packages or host settings were changed by the inspection.
+
+| Specification | `bronco` | `yeti` |
+| --- | --- | --- |
+| Model | HP EliteBook x360 1030 G3 | HP Spectre x360 Convertible 13-w0XX |
+| CPU | Intel Core i7-8650U, 4 cores / 8 threads | Intel Core i7-7500U, 2 cores / 4 threads |
+| Architecture | x86_64 | x86_64 |
+| OS-reported usable RAM (`free -h`) | 14 GiB | 7.1 GiB |
+| Swap configured | 4 GiB | 4 GiB |
+| NVMe disk | Toshiba KXG50ZNV512G, 476.9 GiB | Samsung MZVLW256HEHP-000H1, 238.5 GiB |
+| Root filesystem available at inspection | 432 GiB | 210 GiB |
+| OS | Ubuntu 26.04.1 LTS | Ubuntu 26.04.1 LTS |
+| Running kernel | 7.0.0-29-generic | 7.0.0-30-generic |
+| Failed system services | `grub2-common.service` | None |
+| Reboot-required marker | Present | Present |
+
+Both machines were reachable by bare hostname from Windows. Both reported approximately one hour of uptime. Neither exposed a `k3s` executable in the SSH command's PATH; this is not an exhaustive installation audit.
+
+No active `HandleLid*` or `IdleAction` assignments appeared in `systemd-analyze cat-config systemd/logind.conf`. This does not verify closed-lid behavior or desktop power-manager settings. Both laptops still need a planned reboot and follow-up validation; the failed GRUB boot-record service on `bronco` needs diagnosis.
 
 ## Networking
 
