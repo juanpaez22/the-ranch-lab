@@ -17,6 +17,15 @@ Living notes, expected to evolve as the lab is built. Planned roles below are pr
 - Post-reboot SSH persistence, laptop update completion, and closed-lid operation remain unverified here.
 - No k3s installation is recorded as completed.
 
+## SSH preflight: 2026-09-07
+
+- Both bare hostnames resolved from the Windows workstation during an SSH attempt.
+- `bronco` reached SSH authentication but rejected the available noninteractive authentication.
+- `yeti` lacked a trusted host-key entry for the requested hostname; strict verification stopped the connection.
+- Neither the Windows nor default WSL user's SSH directory contained a private-key file. Password login may have been used previously; this was not verified.
+- No remote inspection commands executed. CPU, disk, OS release, and live memory details remain unverified; the machine table above reflects prior planning notes.
+- Next: establish an approved authentication method and verify `yeti`'s host fingerprint through a trusted channel, then repeat the read-only inventory.
+
 ## Networking
 
 Use hostnames in shared configuration. Keep actual addresses in an ignored local inventory, such as `local/inventory.md`.

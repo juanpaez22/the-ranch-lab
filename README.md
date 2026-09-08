@@ -1,4 +1,4 @@
-# The Ranch Lab
+# The Ranch Lab 🐄
 
 A simple homelab repository for sharing operational scripts, documenting progress, and experimenting with useful services.
 
