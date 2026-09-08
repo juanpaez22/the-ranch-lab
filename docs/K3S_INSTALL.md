@@ -4,7 +4,7 @@ Approved baseline: `bronco` server, `yeti` agent; default packaged components, S
 
 ## Prerequisites
 
-- Ubuntu/systemd, curl, sudo, and working `bronco.local` resolution on the agent.
+- Ubuntu/systemd, curl, sudo, and reachability to bronco's reserved IPv4 address on TCP 6443.
 - Review the [readiness findings](K3S_PLAN.md). Cluster networking must be permitted: server TCP 6443, peer UDP 8472 for VXLAN, and peer TCP 10250 for metrics. Keep these on the trusted LAN.
 - Use a local terminal or `ssh -t` so sudo and the hidden join-token prompt can read your terminal.
 - Obtain this repository on each laptop, or use the session's staged bundle containing `scripts/` and `configs/` together. Git is not required for a staged bundle.
@@ -23,7 +23,7 @@ Both use `set -euo pipefail` to stop on failed commands, missing variables, or p
 
 The server configuration adds `bronco.local` to the TLS certificate and enables secrets encryption. The server script then downloads the upstream installer from the pinned release tag and runs it in server mode with the binary version pinned too.
 
-The agent script first reads the join token with hidden input. `umask 077` restricts newly created files; the token is written outside Git with mode 0600, then removed from the shell variable. The agent configuration supplies the server URL and token-file path. Finally it runs the same upstream installer in agent mode. The token is not a command-line argument.
+The agent script asks for bronco's reserved IPv4 address and reads the join token with hidden input. It substitutes the address into the installed configuration only; the public template keeps a placeholder. `umask 077` restricts newly created files; the token is written outside Git with mode 0600, then removed from the shell variable. Finally it runs the same upstream installer in agent mode. The token is not a command-line argument.
 
 Verification is separate from installation so each step is visible. A failure after configuration is copied may leave partial state; inspect it before retrying.
 
@@ -53,7 +53,13 @@ From the repository or staged bundle root:
 sudo bash scripts/install_k3s_agent_yeti.sh
 ```
 
-Paste the token at the hidden prompt. It is stored only in a root-readable file outside the repository, referenced by the agent configuration. The script does not echo it or put it on a command line.
+Enter bronco's reserved IPv4 address, then paste the token at the hidden prompt. The token is stored only in a root-readable file outside the repository, referenced by the agent configuration. The script does not echo it or put it on a command line.
+
+## Existing agent: fix the initial mDNS endpoint
+
+The initial `.local` endpoint failed during agent startup. Shell mDNS resolution succeeded, but system DNS resolution failed and the agent repeatedly failed to retrieve CA certificates through its local proxy. Direct-IP configuration avoids this resolver dependency.
+
+Do not rerun the installer. On yeti, edit only the `server:` URL in `/etc/rancher/k3s/config.yaml` using `sudoedit`, replacing `bronco.local` with bronco's reserved IPv4 address. Preserve the `token-file:` setting. Then run `sudo systemctl restart k3s-agent` and verify node readiness from bronco. To roll back the endpoint change, restore the previous URL and restart the agent. The TLS SAN on bronco can remain; no server reinstall is necessary.
 
 ## Verify on bronco
 

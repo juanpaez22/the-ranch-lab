@@ -1,2 +1,3 @@
-server: https://bronco.local:6443
+# Replaced locally by the agent installer; never commit the real LAN IP.
+server: https://SERVER_IP:6443
 token-file: /etc/rancher/k3s/join-token
