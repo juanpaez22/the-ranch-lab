@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: it-tools
+  namespace: it-tools
+  labels:
+    app.kubernetes.io/name: it-tools
+    app.kubernetes.io/instance: it-tools
+    app.kubernetes.io/part-of: ranch-lab
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: it-tools
+    app.kubernetes.io/instance: it-tools
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

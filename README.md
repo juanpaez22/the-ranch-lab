@@ -5,6 +5,7 @@ A simple homelab repository for sharing operational scripts, documenting progres
 - [Architecture](docs/ARCHITECTURE.md): current machines and evolving plans.
 - [Backlog](docs/BACKLOG.md): next steps and ideas.
 - [Setup](docs/SETUP.md): laptop preparation, cluster installation, administration, and rebuild procedures.
+- `apps/`: declarative Kubernetes application manifests.
 - `scripts/`: operational scripts.
 - `configs/`: reusable configuration files.
 - `logs/`: daily progress and outcomes.

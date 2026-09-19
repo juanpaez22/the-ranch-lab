@@ -40,7 +40,8 @@ Standalone kubectl works without sudo on both laptops using private kubeconfig c
 - Laptop SSH survived reboot; matching lid settings were inspected and the owner confirmed access with lids closed.
 - No failed system units or pending reboot markers after laptop preparation. CPU/memory cgroups and required kernel modules were available; time was synchronized. IPv4 forwarding was enabled after installation.
 - A brief connection interruption during agent startup recovered automatically. Neither laptop rebooted or restarted SSH; its exact cause remains unknown. Short peer tests had no loss but variable latency.
-- Dedicated cross-node application traffic, DNS, ingress, node-failure behavior, and full recovery testing remain pending. Live firewall rules and full package-update coverage were not audited.
+- IT-Tools is the first application workload: one stateless replica, a ClusterIP Service, and a hostless Traefik Ingress. On 2026-09-19 Traefik ran on bronco, IT-Tools ran on yeti, the LAN ingress path returned HTTP 200, and an in-pod request through the Service's cluster DNS name also returned HTTP 200. WSL did not resolve the `bronco.local` mDNS name directly, so the external test supplied bronco's reserved address while preserving the Host header.
+- Node-failure behavior and full recovery testing remain pending. Live firewall rules and full package-update coverage were not audited.
 
 ## References
 

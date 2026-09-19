@@ -5,6 +5,7 @@ Repeatable procedures for the current [architecture](ARCHITECTURE.md). Run only 
 - [Ubuntu preparation](#ubuntu-preparation)
 - [K3s installation](#k3s-installation)
 - [Cluster administration](#cluster-administration)
+- [First application: IT-Tools](#first-application-it-tools)
 
 ## Ubuntu preparation
 
@@ -218,3 +219,56 @@ Native Windows access encountered HTTPS inspection replacing the cluster certifi
 - Verify `kubectl get nodes`, `kubectl get pods -A`, and `kubectl get --raw=/readyz` with certificate verification enabled.
 - Refresh copied credentials when certificates are renewed or the cluster is rebuilt; copies do not update automatically. Keep the client compatible when upgrading the server.
 - To remove local access, remove the client and private config you installed. Deleting a copy is not credential revocation; another copy of the same credentials remains valid.
+
+## First application: IT-Tools
+
+IT-Tools is the initial stateless workload and LAN-ingress check. Its manifests live in [`apps/it-tools`](../apps/it-tools). One replica is exposed through a ClusterIP Service and a hostless Traefik Ingress. While it is the only HTTP application, clients with mDNS support can open `http://bronco.local/`. Replace the hostless rule with a dedicated DNS name before adding another root application.
+
+### Prerequisites
+
+- Bronco is Ready and reachable through the configured kubectl context.
+- Traefik is Running and the `traefik` IngressClass exists.
+- Ports 80 and 443 on bronco remain available to the bundled ServiceLB.
+- The cluster can pull the pinned IT-Tools image from `ghcr.io`. The manifest records the immutable digest verified during the initial deployment. Review upstream changes and update this digest deliberately.
+
+Preview and inspect the change from the repository root:
+
+```bash
+kubectl kustomize apps/it-tools
+kubectl diff -k apps/it-tools
+```
+
+### Apply
+
+```bash
+kubectl apply -k apps/it-tools
+kubectl -n it-tools rollout status deployment/it-tools --timeout=180s
+```
+
+### Validate
+
+```bash
+kubectl -n it-tools get deployment,pod,service,ingress -o wide
+kubectl -n it-tools get endpointslice -l kubernetes.io/service-name=it-tools
+curl --fail --show-error --head http://bronco.local/
+```
+
+WSL does not currently resolve the lab's mDNS names. From WSL, preserve the hostname while supplying bronco's private reserved address explicitly:
+
+```bash
+curl --fail --show-error --head \
+  --resolve bronco.local:80:<bronco-reserved-ipv4> \
+  http://bronco.local/
+```
+
+Keep the real address outside this public repository. Open `http://bronco.local/` from another LAN client and confirm the IT-Tools interface loads. This validates the path through LAN name resolution, ServiceLB, Traefik, the ClusterIP Service, and the pod. Inspect pod placement because one replica only exercises cross-node routing when Traefik and IT-Tools run on different nodes. During the initial deployment, Traefik ran on bronco, IT-Tools ran on yeti, and the request returned HTTP 200. An in-pod request to `it-tools.it-tools.svc.cluster.local` also returned HTTP 200, validating cluster DNS and Service routing.
+
+### Roll back
+
+IT-Tools stores no application data. Remove all resources created by this kustomization with:
+
+```bash
+kubectl delete -k apps/it-tools
+```
+
+Confirm the namespace is gone and `http://bronco.local/` no longer routes to the application. Reapplying the kustomization recreates it from Git.
