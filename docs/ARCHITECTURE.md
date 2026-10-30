@@ -1,6 +1,6 @@
 # Architecture
 
-Current setup verified on 2026-09-07. Procedures live in [SETUP.md](SETUP.md); future work lives in [BACKLOG.md](BACKLOG.md).
+Current setup verified through 2026-10-11. Procedures live in [SETUP.md](SETUP.md); future work lives in [BACKLOG.md](BACKLOG.md).
 
 ## Machines
 
@@ -8,7 +8,7 @@ Current setup verified on 2026-09-07. Procedures live in [SETUP.md](SETUP.md); f
 | --- | --- | --- |
 | `bronco` | HP EliteBook x360 1030 G3; i7-8650U, 4 cores / 8 threads; 14 GiB OS-visible RAM; Toshiba 476.9 GiB NVMe | k3s server and workloads |
 | `yeti` | HP Spectre x360 Convertible 13-w0XX; i7-7500U, 2 cores / 4 threads; 7.1 GiB OS-visible RAM; Samsung 238.5 GiB NVMe | k3s agent |
-| `longhorn` | Windows 11 workstation, WSL2, NVIDIA GPU | Gaming/workstation; cluster administration through WSL |
+| `longhorn` | Windows 11 workstation, WSL2, NVIDIA GPU | Gaming/workstation; cluster administration and local inference through WSL |
 
 Both laptops run Ubuntu 26.04.1 LTS, x86_64, kernel `7.0.0-31-generic`, with 4 GiB host swap retained. Hardware inventory was read over SSH. Post-install root filesystem availability was approximately 431 GiB on bronco and 210 GiB on yeti.
 
@@ -32,6 +32,12 @@ Windows resolves bare laptop names. Linux shell tools resolve their peers throug
 
 Standalone kubectl works without sudo on both laptops using private kubeconfig copies. PowerShell can administer through WSL. Native Windows HTTPS inspection substituted the API certificate; WSL validates the original certificate. No TLS-verification bypass or security-product change was applied. The Windows client remains downloaded but is not on PATH.
 
+## Workstation inference
+
+Longhorn runs llama.cpp on demand inside Ubuntu WSL, using its NVIDIA GPU through CUDA. OpenCode in the same WSL instance connects to the loopback-only OpenAI-compatible endpoint at `http://127.0.0.1:8080/v1`. The default is Gemma 4 26B-A4B Q4_0 with one 128K context slot; OpenCode manages conversation context and executes model-requested tools.
+
+The server runs in tmux and is stopped between uses to release GPU memory for gaming. LAN exposure, automatic startup, and cluster integration remain planned work. See [setup and lifecycle](SETUP.md#local-wsl-inference) and the [2026-10-11 benchmark](INFERENCE_BENCHMARK_2026_10_11.md) for configuration and measured limits.
+
 ## Verified state and limits
 
 - Both nodes Ready; packaged pods Running and installation jobs Completed.
@@ -45,4 +51,4 @@ Standalone kubectl works without sudo on both laptops using private kubeconfig c
 
 ## References
 
-[K3s requirements](https://docs.k3s.io/installation/requirements), [network options](https://docs.k3s.io/networking/basic-network-options), [networking services](https://docs.k3s.io/networking/networking-services), [server options](https://docs.k3s.io/cli/server), [SQLite-to-etcd conversion](https://docs.k3s.io/datastore/ha-embedded), [storage](https://docs.k3s.io/add-ons/storage), [backup and restore](https://docs.k3s.io/datastore/backup-restore).
+[K3s requirements](https://docs.k3s.io/installation/requirements), [network options](https://docs.k3s.io/networking/basic-network-options), [networking services](https://docs.k3s.io/networking/networking-services), [server options](https://docs.k3s.io/cli/server), [SQLite-to-etcd conversion](https://docs.k3s.io/datastore/ha-embedded), [storage](https://docs.k3s.io/add-ons/storage), [backup and restore](https://docs.k3s.io/datastore/backup-restore), [Gemma 4 model card](https://huggingface.co/google/gemma-4-26B-A4B), [official Gemma 4 GGUF](https://huggingface.co/ggml-org/gemma-4-26B-A4B-it-GGUF), [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases), and [OpenCode local model configuration](https://opencode.ai/v2/docs/models#compatible).

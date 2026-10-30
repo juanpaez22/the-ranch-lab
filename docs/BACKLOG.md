@@ -14,11 +14,28 @@ Ideas are candidates, not commitments. Move items forward when there is a useful
 
 Bootstrap, lid behavior, hardware inventory, and workstation administration are complete; see [architecture](ARCHITECTURE.md) and [setup](SETUP.md). Application-level validation remains separate from node readiness.
 
+## Local inference
+
+### Model lifecycle
+
+- Evaluate llama.cpp's built-in router, model presets, load/unload API, Web UI, and idle unloading for easy model switching and GPU release before gaming.
+- Consider a small local control application only if existing controls leave a concrete gap. Possible additions are benchmark-backed presets, explicit CPU-offload policy, GPU memory checks, and a stable OpenAI-compatible endpoint.
+- Any custom controller should manage one owned child server at a time, stay lightweight while unloaded, and verify GPU release after bounded shutdown. Keep controls on loopback until authentication and scoped LAN access are in place.
+
+### Service exposure and integration
+
+- Validate direct LAN access from bronco and yeti to the longhorn inference service. Keep one provider-compatible API boundary and choose one exposure option after testing the workstation lifecycle:
+  - Bind llama.cpp to the WSL interface and use WSL mirrored networking plus a narrowly scoped Hyper-V firewall rule. This is the most direct WSL path but requires Windows and WSL setting changes.
+  - Keep default WSL NAT and create a Windows port-proxy plus a narrowly scoped firewall rule. This adds forwarding state and must account for the WSL guest address changing.
+  - Run a native Windows reverse proxy as a stable LAN front door that forwards to WSL. This keeps inference in WSL but adds a supervised Windows component.
+  - Move llama.cpp serving to native Windows. This gives the simplest Windows startup and LAN lifecycle while keeping OpenCode in WSL as a client.
+- After selecting an exposure path, add LAN DNS such as `inference.apps.home.arpa`, restrict access to trusted LAN clients, decide whether the reverse proxy should add authentication, and validate health, streaming, large prompts, restart behavior, and GPU release from both bronco and yeti.
+- Compare the current llama.cpp setup with Ollama or vLLM only if model management, concurrency, or client compatibility creates a concrete need. An optional Open WebUI frontend can remain independent of the API boundary.
+
 ## Platform experiments
 
-- Local inference with Ollama or vLLM and an optional Open WebUI frontend.
 - Docker Compose for services that benefit from a small standalone setup.
-- Evaluate direct LAN access to `longhorn` WSL using mirrored networking and narrowly scoped Hyper-V firewall rules. Possible uses include SSH on a non-conflicting port, exposing a WSL service such as Ollama to lab peers, or joining WSL to k3s as a GPU-capable worker.
+- Evaluate direct LAN access to `longhorn` WSL for other services such as SSH on a non-conflicting port or joining WSL to k3s as a GPU-capable worker.
 - Before using WSL as an always-available host, define its Windows startup/keepalive behavior. Enabling a systemd service alone does not keep a WSL instance running.
 - For a k3s GPU worker, validate k3s networking and cgroup requirements, WSL route overlap, node lifecycle after Windows restarts, and NVIDIA container/GPU support before joining the cluster.
 - Optional Raspberry Pi worker and multi-architecture images.
@@ -54,3 +71,4 @@ Adapted from prior personal project notes. Private datasets and personal workflo
 - [K3s requirements](https://docs.k3s.io/installation/requirements), for node networking, firewall, and cgroup prerequisites.
 - [NVIDIA: CUDA on WSL](https://docs.nvidia.com/cuda/wsl-user-guide/), for GPU support, containers, and WSL-specific limitations.
 - [Ollama FAQ](https://docs.ollama.com/faq), including `OLLAMA_HOST` configuration for LAN service exposure.
+- [llama.cpp server documentation](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md), including router mode, model presets, load/unload endpoints, the Web UI, and idle sleep.
