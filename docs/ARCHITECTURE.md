@@ -1,54 +1,70 @@
 # Architecture
 
-Current setup verified through 2026-10-11. Procedures live in [SETUP.md](SETUP.md); future work lives in [BACKLOG.md](BACKLOG.md).
+Last updated: 2026-10-30
 
-## Machines
+The Ranch Lab is a small LAN-based homelab for running useful services and experimenting with Kubernetes, networking, and local inference. Two Linux laptops host the cluster; a Windows workstation supplies GPU inference while remaining available for gaming and everyday use.
 
-| Host | Hardware | Current role |
+This document describes the deployed components and their boundaries. [SETUP.md](SETUP.md) covers cluster installation and administration, [INFERENCE.md](INFERENCE.md) covers the inference service, and [BACKLOG.md](BACKLOG.md) tracks planned work. Dated validation and troubleshooting records live in [logs/](../logs/).
+
+## Hosts
+
+| Host | Hardware | Role |
 | --- | --- | --- |
-| `bronco` | HP EliteBook x360 1030 G3; i7-8650U, 4 cores / 8 threads; 14 GiB OS-visible RAM; Toshiba 476.9 GiB NVMe | k3s server and workloads |
-| `yeti` | HP Spectre x360 Convertible 13-w0XX; i7-7500U, 2 cores / 4 threads; 7.1 GiB OS-visible RAM; Samsung 238.5 GiB NVMe | k3s agent |
-| `longhorn` | Windows 11 workstation, WSL2, NVIDIA GPU | Gaming/workstation; cluster administration and local inference through WSL |
+| `bronco` | HP EliteBook x360 1030 G3; i7-8650U; 14 GiB OS-visible RAM; 476.9 GiB NVMe | k3s server and worker |
+| `yeti` | HP Spectre x360 Convertible 13-w0XX; i7-7500U; 7.1 GiB OS-visible RAM; 238.5 GiB NVMe | k3s worker |
+| `longhorn` | Windows 11 workstation with WSL2 and an NVIDIA RTX 5080 | Gaming, cluster administration, and GPU inference |
 
-Both laptops run Ubuntu 26.04.1 LTS, x86_64, kernel `7.0.0-31-generic`, with 4 GiB host swap retained. Hardware inventory was read over SSH. Post-install root filesystem availability was approximately 431 GiB on bronco and 210 GiB on yeti.
+The laptops run Ubuntu 26.04.1 LTS and retain 4 GiB of host swap. They use Wi-Fi with DHCP reservations. Longhorn's WSL instance administers the cluster but is not a cluster node.
 
-An optional Pi worker, WSL worker, and GPU integration are future experiments. WSL currently administers the cluster; it is not a node.
+## Kubernetes platform
 
-## Cluster decisions
+The cluster has one k3s server on bronco and one agent on yeti. Both can run application workloads. The server uses SQLite, so the control plane has no high availability.
 
-- **Version:** k3s `v1.36.4+k3s1`, pinned in [version.txt](../configs/k3s/version.txt); standalone kubectl `v1.36.4`.
-- **Topology:** one server on bronco and one agent on yeti. SQLite datastore; no control-plane high availability.
-- **Networking:** default IPv4 Flannel VXLAN, pod range `10.42.0.0/16`, service range `10.43.0.0/16`. These are cluster defaults, not published host addresses.
-- **Components:** bundled containerd, CoreDNS, Traefik, ServiceLB, metrics-server, and network policy. Traefik/ServiceLB uses node ports 80/443 for ingress.
-- **Overrides:** server TLS SAN `bronco.local` and secrets encryption enabled. Host swap remains enabled; no separate pod-swap experiment.
-- **Storage:** default local-path volumes. Data belongs to its node and does not automatically move with workloads.
-- **Recovery:** no backups initially by explicit choice. Rebuild scripts reproduce infrastructure; cluster state, secrets, and application data are disposable.
+| Component | Configuration |
+| --- | --- |
+| Versions | k3s `v1.36.4+k3s1`, pinned in [version.txt](../configs/k3s/version.txt); standalone kubectl `v1.36.4` |
+| Container runtime | Bundled containerd |
+| Pod networking | IPv4 Flannel VXLAN; pod range `10.42.0.0/16` |
+| Service networking | Service range `10.43.0.0/16`; CoreDNS for cluster DNS |
+| LAN ingress | Bundled Traefik and ServiceLB, exposing TCP 80/443 on LAN nodes |
+| Other bundled components | metrics-server and network policy |
+| Storage | local-path volumes backed by the node hosting each volume |
+| API security | Secrets encryption enabled; server certificate includes `bronco.local` |
 
-## Access and networking
+The pod and service ranges are cluster defaults, not LAN host addresses. Persistent volumes are local to a node: moving a workload does not automatically move its data. Host swap remains enabled without a separate pod-swap experiment.
 
-Both laptops currently use Wi-Fi and DHCP reservations. Public documentation uses hostnames; actual LAN addresses belong only in private installed configuration or ignored local inventory.
+## Networking and access
 
-Windows resolves bare laptop names. Linux shell tools resolve their peers through mDNS `.local`, but the agent failed to join using that resolver path. The installed agent and remote kubeconfigs now use bronco's reserved IPv4 address. The public agent template prompts for the address rather than storing it. The server's additional TLS SAN can remain.
+LAN clients reach cluster applications through Traefik on the nodes. Kubernetes Services provide internal routing, and CoreDNS supplies names inside the cluster. Household DNS is separate; a standalone Pi-hole and service names under `apps.home.arpa` are planned but not deployed.
 
-Standalone kubectl works without sudo on both laptops using private kubeconfig copies. PowerShell can administer through WSL. Native Windows HTTPS inspection substituted the API certificate; WSL validates the original certificate. No TLS-verification bypass or security-product change was applied. The Windows client remains downloaded but is not on PATH.
+Host-name resolution varies by client. Windows resolves the laptop names, and the Linux hosts use mDNS names such as `bronco.local`. WSL has not reliably resolved those mDNS names. Installed cluster connections therefore use bronco's reserved IPv4 address where needed, while public configuration prompts for that value rather than storing it. Exact addresses and machine-specific overrides belong in ignored `local/` files or private installed configuration.
 
-## Workstation inference
+Administration uses SSH and private kubeconfig copies. Standalone kubectl works without sudo on both laptops, and Windows administration uses WSL. WSL validates the cluster API certificate directly; the recorded native Windows HTTPS path substituted the certificate, so it is not the documented kubectl access path.
 
-Longhorn runs llama.cpp on demand inside Ubuntu WSL, using its NVIDIA GPU through CUDA. OpenCode in the same WSL instance connects to the loopback-only OpenAI-compatible endpoint at `http://127.0.0.1:8080/v1`. The default is Gemma 4 26B-A4B Q4_0 with one 128K context slot; OpenCode manages conversation context and executes model-requested tools.
+## Services
 
-The server runs in tmux and is stopped between uses to release GPU memory for gaming. LAN exposure, automatic startup, and cluster integration remain planned work. See [setup and lifecycle](SETUP.md#local-wsl-inference) and the [2026-10-11 benchmark](INFERENCE_BENCHMARK_2026_10_11.md) for configuration and measured limits.
+### Cluster applications
 
-## Verified state and limits
+IT-Tools is the first application, deployed from [apps/it-tools](../apps/it-tools). It has one stateless replica, a ClusterIP Service, and a hostless Traefik Ingress. The hostless rule is suitable while it is the only application using that route; assign explicit hostnames before sharing the ingress with more applications.
 
-- Both nodes Ready; packaged pods Running and installation jobs Completed.
-- Owner output confirmed secrets encryption enabled with matching hashes.
-- Workstation WSL checks confirmed node/pod status and authenticated API readiness `ok`.
-- Laptop SSH survived reboot; matching lid settings were inspected and the owner confirmed access with lids closed.
-- No failed system units or pending reboot markers after laptop preparation. CPU/memory cgroups and required kernel modules were available; time was synchronized. IPv4 forwarding was enabled after installation.
-- A brief connection interruption during agent startup recovered automatically. Neither laptop rebooted or restarted SSH; its exact cause remains unknown. Short peer tests had no loss but variable latency.
-- IT-Tools is the first application workload: one stateless replica, a ClusterIP Service, and a hostless Traefik Ingress. On 2026-09-19 Traefik ran on bronco, IT-Tools ran on yeti, the LAN ingress path returned HTTP 200, and an in-pod request through the Service's cluster DNS name also returned HTTP 200. WSL did not resolve the `bronco.local` mDNS name directly, so the external test supplied bronco's reserved address while preserving the Host header.
-- Node-failure behavior and full recovery testing remain pending. Live firewall rules and full package-update coverage were not audited.
+### Workstation inference
+
+Longhorn exposes an authenticated OpenAI-compatible API at `http://longhorn.local:19331/v1` to devices on the home LAN. A user systemd service in WSL runs llama.cpp's model router, loading one model at a time and releasing model memory after 30 idle minutes. Windows provides LAN forwarding and a logon task that keeps WSL available; stopping the inference service releases the GPU for gaming. Configuration, model selection, client setup, and lifecycle limits are documented in [INFERENCE.md](INFERENCE.md).
+
+## Availability and recovery
+
+This is a learning platform with a single control-plane node and node-local storage. The current recovery policy treats cluster state, secrets, and application data as disposable; there are no cluster backups. Versioned configuration and scripts reproduce the infrastructure. Revisit that policy before storing data that must survive a rebuild.
+
+Inference is independent of k3s but depends on Longhorn being awake and WSL being available. Cluster clients must tolerate inference being stopped for gaming. A GPU-capable cluster node, GitOps, monitoring, and household DNS remain backlog items rather than architectural dependencies.
+
+## Validation boundaries
+
+The cluster's recorded checks established node readiness, API readiness, secrets encryption, SSH access after laptop reboots, and operation with the lids closed. IT-Tools was validated through both LAN ingress and cluster DNS across nodes. These are historical checks, not a statement of live node health; see [the bootstrap log](../logs/2026_09_07.md) and [application validation](../logs/2026_09_19.md).
+
+Inference was validated locally and from bronco and yeti on 2026-10-30, including authentication and service stop/start. Full Windows reboot/login and sleep/resume recovery remain untested. Cluster node-failure recovery, a complete firewall audit, and package-update completeness also remain open.
 
 ## References
 
-[K3s requirements](https://docs.k3s.io/installation/requirements), [network options](https://docs.k3s.io/networking/basic-network-options), [networking services](https://docs.k3s.io/networking/networking-services), [server options](https://docs.k3s.io/cli/server), [SQLite-to-etcd conversion](https://docs.k3s.io/datastore/ha-embedded), [storage](https://docs.k3s.io/add-ons/storage), [backup and restore](https://docs.k3s.io/datastore/backup-restore), [Gemma 4 model card](https://huggingface.co/google/gemma-4-26B-A4B), [official Gemma 4 GGUF](https://huggingface.co/ggml-org/gemma-4-26B-A4B-it-GGUF), [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases), and [OpenCode local model configuration](https://opencode.ai/v2/docs/models#compatible).
+- [K3s requirements](https://docs.k3s.io/installation/requirements), [server options](https://docs.k3s.io/cli/server), and [datastore choices](https://docs.k3s.io/datastore/ha-embedded).
+- [K3s networking](https://docs.k3s.io/networking/basic-network-options), [network services](https://docs.k3s.io/networking/networking-services), and [bundled components](https://docs.k3s.io/add-ons).
+- [K3s storage](https://docs.k3s.io/add-ons/storage) and [backup and restore](https://docs.k3s.io/datastore/backup-restore).

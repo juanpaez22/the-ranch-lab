@@ -13,7 +13,8 @@
       "name": "Local llama.cpp",
       "package": "@opencode/ai/providers/openai-compatible",
       "settings": {
-        "baseURL": "http://127.0.0.1:8080/v1",
+        "baseURL": "http://127.0.0.1:19331/v1",
+        "apiKey": "{file:~/.config/llama.cpp/api.key}",
         "headerTimeout": 600000,
         "chunkTimeout": 600000
       },
@@ -34,6 +35,34 @@
           "compatibility": {
             "reasoningField": "reasoning_content"
           }
+        },
+        "gemma-4-e4b-q4": {
+          "modelID": "gemma-4-e4b-q4",
+          "name": "Gemma 4 E4B Q4_0",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 131072, "input": 122880, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
+        },
+        "gemma-4-12b-q4": {
+          "modelID": "gemma-4-12b-q4",
+          "name": "Gemma 4 12B Q4_0",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 131072, "input": 122880, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
+        },
+        "gemma-4-31b-q4": {
+          "modelID": "gemma-4-31b-q4",
+          "name": "Gemma 4 31B Q4_0 (CPU offload)",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 131072, "input": 122880, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
+        },
+        "qwen3.8-27b-q4": {
+          "modelID": "qwen3.8-27b-q4",
+          "name": "Qwen3.8 27B Q4_K_M (CPU offload)",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 131072, "input": 122880, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
         }
       }
     }

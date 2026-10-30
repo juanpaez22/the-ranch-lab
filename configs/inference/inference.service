@@ -1,0 +1,17 @@
+[Unit]
+Description=Local llama.cpp model router
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=%h
+ExecStart=%h/.local/bin/llama-server --host 127.0.0.1 --port 19331 --models-preset %h/.config/llama.cpp/models.ini --models-max 1 --sleep-idle-seconds 1800 --api-key-file %h/.config/llama.cpp/api.key --offline --no-mmproj
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillMode=control-group
+UMask=0077
+
+[Install]
+WantedBy=default.target
