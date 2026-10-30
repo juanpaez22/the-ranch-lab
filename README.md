@@ -8,4 +8,5 @@ A simple homelab repository for sharing operational scripts, documenting progres
 - `apps/`: declarative Kubernetes application manifests.
 - `scripts/`: operational scripts.
 - `configs/`: reusable configuration files.
+- `benchmarks/`: repeatable performance experiments and summarized results.
 - `logs/`: daily progress and outcomes.

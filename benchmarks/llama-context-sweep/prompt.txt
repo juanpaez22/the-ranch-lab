@@ -1,0 +1,24 @@
+Create a complete, polished static portfolio website as one self-contained `index.html` file.
+
+Use this fictional profile:
+
+- Name: Maya Chen
+- Role: Product designer and frontend engineer
+- Location: Seattle, Washington
+- Bio: Maya designs accessible tools for creative teams and builds the interfaces that bring them to life.
+- Projects:
+  1. Atlas Design System: a cross-platform design system used by 14 product teams.
+  2. Field Notes: an offline-first research notebook for remote field studies.
+  3. Signal Garden: an interactive data-visualization installation for a public library.
+- Skills: product design, design systems, accessibility, TypeScript, React, data visualization
+- Contact: maya.chen@example.com
+
+Requirements:
+
+- Output only the HTML document, without Markdown fences or commentary.
+- Include semantic HTML, responsive inline CSS, and a small inline JavaScript enhancement.
+- Include a navigation header, hero, about, project cards, skills, contact section, and footer.
+- Use a distinctive but professional visual design with light and dark color-scheme support.
+- Make keyboard focus states and reduced-motion behavior explicit.
+- Do not use external assets, fonts, libraries, or network requests.
+- Produce enough detail for a realistic portfolio and at least 900 generated tokens.

@@ -30,6 +30,8 @@ __pycache__/
 *.pyc
 .venv/
 node_modules/
+benchmarks/llama-context-sweep/results/*/logs/
+benchmarks/llama-context-sweep/results/*/responses/
 
 # Editor and OS state
 .vscode/
