@@ -36,12 +36,36 @@ def main():
     sources = [json.loads(p.read_text()) for p in files]
     uids = set()
     for source in sources:
+        if not isinstance(source, dict):
+            raise ValueError("Each dashboard must be a JSON object")
         uid = source.get("uid", "")
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,40}", uid) or uid in uids:
             raise ValueError("Each dashboard needs a unique, stable UID")
         uids.add(uid)
         if not source.get("title") or not isinstance(source.get("panels"), list):
             raise ValueError(f"Invalid dashboard structure: {uid}")
+        pending = list(source["panels"])
+        panel_ids = set()
+        while pending:
+            panel = pending.pop(0)
+            if not isinstance(panel, dict) or not isinstance(panel.get("type"), str):
+                raise ValueError(f"Each panel needs a string visualization type: {uid}")
+            panel_id = panel.get("id")
+            if not isinstance(panel_id, int) or panel_id in panel_ids:
+                raise ValueError(f"Each panel needs a unique integer ID: {uid}")
+            panel_ids.add(panel_id)
+            grid = panel.get("gridPos", {})
+            if not isinstance(grid, dict) or not all(isinstance(grid.get(k), int) for k in ("x", "y", "w", "h")):
+                raise ValueError(f"Invalid panel grid coordinates: {uid}/{panel_id}")
+            if min(grid["x"], grid["y"]) < 0 or min(grid["w"], grid["h"]) <= 0 or grid["x"] + grid["w"] > 24:
+                raise ValueError(f"Panel lies outside the 24-column grid: {uid}/{panel_id}")
+            targets = panel.get("targets", [])
+            if not isinstance(targets, list) or not all(isinstance(t, dict) for t in targets):
+                raise ValueError(f"Panel targets must be a list of objects: {uid}/{panel_id}")
+            children = panel.get("panels", [])
+            if not isinstance(children, list):
+                raise ValueError(f"Invalid nested panels: {uid}/{panel_id}")
+            pending.extend(children)
         if source.get("id") is not None or source.get("version", 0) != 0:
             raise ValueError(f"Remove instance-specific id/version fields: {uid}")
     password = args.password_file.read_text().strip()

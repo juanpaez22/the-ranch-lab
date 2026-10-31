@@ -442,6 +442,21 @@ Inspect the Grafana PVC's keep annotation before `helm uninstall grafana -n moni
 
 Dashboard JSON in [apps/monitoring/grafana/dashboards/](../apps/monitoring/grafana/dashboards/) is the source of truth. [node-basics.json](../apps/monitoring/grafana/dashboards/node-basics.json) establishes a minimal example: two stat panels show uptime and memory used for each node, using datasource UID `prometheus`. Memory used means `100 * (1 - MemAvailable / MemTotal)`, including reclaimable memory correctly. Uptime uses exporter host time minus boot time. Missing data is not converted to zero.
 
+[homelab-summary.json](../apps/monitoring/grafana/dashboards/homelab-summary.json) defines `Ranch / Operations`, an eight-panel always-on overview. The top row shows node readiness/reachability, Deployment/DaemonSet replica shortfall, and observed container restarts over one hour. Three-hour CPU/memory trends use consistent Bronco cyan and Yeti violet; the bottom row shows root-filesystem headroom, physical-interface traffic, and CPU-package temperatures. It has no variable controls and refreshes every 30 seconds.
+
+Open `http://127.0.0.1:3000/d/ranch-homelab-summary/ranch-operations?kiosk&theme=dark` through the existing port-forward for a dark kiosk view. The 24-column, 17-row layout targets a landscape laptop display; the owner confirmed it displays correctly on Yeti. Automated browser-rendering checks have not been performed. Missing metrics are not replaced with healthy zeroes: top-row status requires a live KSM scrape, and known nodes with missing host scrapes show unhealthy. Replica availability does not establish end-to-end HTTP health. Temperature guide lines at 75/90 °C are attention thresholds, not measured hardware throttling limits. Node Exporter already supplies these temperatures; no new exporter was installed.
+
+Yeti's desktop browser can access the Grafana ClusterIP directly without a port-forward because Yeti is a cluster node. Obtain its current address privately with `kubectl -n monitoring get svc grafana -o jsonpath='{.spec.clusterIP}{"\n"}'`, then open `http://<service-ip>/d/ranch-homelab-summary/ranch-operations?kiosk&theme=dark`. The `.svc.cluster.local` hostname is intended for cluster DNS and is not assumed to resolve in the desktop browser. The virtual address can change when the Service is recreated; a stable LAN hostname/Ingress remains future work. Credentials remain in the private Secret; the temporary desktop login note was removed.
+
+Yeti's desktop user has GNOME screen blanking and idle dimming disabled for continuous viewing. From that user's graphical terminal, the settings are:
+
+```bash
+gsettings set org.gnome.desktop.session idle-delay 0
+gsettings set org.gnome.settings-daemon.plugins.power idle-dim false
+```
+
+Verify with `gsettings get` for the same schema/key pairs. These settings persist for that user; they do not configure browser startup or change the separate sleep/lock settings. Yeti's AC idle-suspend action is `nothing`, while battery idle-suspend remains `suspend`. For remote changes, use the logged-in user's D-Bus session. To restore the prior display behavior, set `idle-delay` to `300` and `idle-dim` to `true`.
+
 With the Grafana localhost port-forward running, publish and check:
 
 ```bash
@@ -451,7 +466,7 @@ python3 scripts/monitoring/publish_dashboards.py --check
 
 The publisher requires Python 3 and uses only its standard library and the existing private admin password file. Optional `--endpoint`, `--password-file`, and explicit JSON file paths select a tunnel, credential location, or subset. It uses bounded requests and keeps credentials out of process arguments. It does not start a port-forward. The current publisher targets the installed Grafana 12.3 legacy dashboard API (`POST /api/dashboards/db`); review API compatibility when upgrading Grafana.
 
-Publication creates or updates dashboards by stable UID, verifies the saved authored fields, and skips unchanged definitions. It does not delete dashboards, touch Helm resources, or create public shares. Each JSON file is a classic Grafana dashboard model, not an API response/wrapper: retain stable `uid` and panel IDs, reference datasource UID `prometheus`, and omit instance-specific numeric IDs/revisions (`id: null`, `version: 0` are also accepted). Files are published to the default dashboard folder. Keep credentials, concrete LAN addresses, query results, and exported instance metadata out of these files.
+Publication validates panel IDs, visualization types, target structures, and grid bounds before writing. It creates or updates dashboards by stable UID, verifies the saved authored fields, and skips unchanged definitions. It does not delete dashboards, touch Helm resources, or create public shares. Each JSON file is a classic Grafana dashboard model, not an API response/wrapper: retain stable `uid` and panel IDs, reference datasource UID `prometheus`, and omit instance-specific numeric IDs/revisions (`id: null`, `version: 0` are also accepted). Files are published to the default dashboard folder. Keep credentials, concrete LAN addresses, query results, and exported instance metadata out of these files.
 
 `--check` is read-only: it compares saved definitions and runs each literal PromQL expression through Grafana, requiring nonempty finite instant-vector results. It is a smoke check, not proof of correct units/labels or visual layout. Variable-based queries require explicit bindings and a dedicated validation procedure. The example was additionally checked for exactly Bronco/Yeti values and valid uptime/percentage ranges. No browser-rendered visual check has been performed.
 

@@ -45,8 +45,10 @@ Bootstrap, lid behavior, hardware inventory, and workstation administration are 
 - [x] Add kube-state-metrics to expose Kubernetes workload, node, and storage object state through Prometheus. Actual container CPU/memory monitoring remains separate.
 - [x] Add Grafana as a separate Helm release with a provisioned Prometheus datasource.
 - [x] Establish repository-managed dashboard JSON and an idempotent API publisher with a node uptime/memory example.
-- Build a homelab system dashboard using the example and publisher; include useful host and Kubernetes object state before adding more exporters.
-- Keep a system-health dashboard visible on one laptop screen. Choose the laptop later, and configure a browser display that recovers after login/reboot without interrupting its existing k3s role. Verify screen-power, session, and resource behavior separately from server uptime.
+- [x] Publish an eight-panel operations dashboard for passive laptop viewing: node/workload health, restarts, CPU/memory trends, disk headroom, physical LAN traffic, and CPU-package temperature. The owner confirmed it displays correctly on Yeti.
+- [x] Show the operations dashboard on Yeti and disable GNOME screen blanking/dimming.
+- Automate browser startup/recovery after login or reboot on Yeti. Verify long-idle display behavior and resource use separately from server uptime.
+- Add [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) probes for actual service HTTP/TCP availability and latency. Start with IT-Tools/Grafana and later the inference health endpoint; test internal service reachability separately from the LAN ingress path. A healthy replica count does not prove the user-facing service works. No probe exporter is deployed yet.
 - Distinguish expected inference shutdown for gaming from failures. Add actionable alerts after the basic dashboards work; avoid routine notifications for deliberately unloaded models.
 
 ### Longhorn metrics export

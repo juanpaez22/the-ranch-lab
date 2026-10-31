@@ -51,9 +51,9 @@ IT-Tools is the first application, deployed from [apps/it-tools](../apps/it-tool
 
 Prometheus runs on Bronco as a pinned standalone Helm release, with Node Exporter on both Linux nodes and kube-state-metrics on Bronco. It collects host metrics and Kubernetes object state every 30 seconds, retaining up to 48 hours on a node-local PVC. Node Exporter listens on host TCP 9100; the Prometheus UI/API is reached through localhost port-forwarding.
 
-Grafana runs as a separate Helm release on Yeti, with its own node-local database PVC and a provisioned Prometheus datasource. Its UI also uses localhost port-forwarding; administrator credentials are supplied through a private Secret. Both releases retain their PVCs on Helm uninstall, but there is no monitoring backup or node failover. Installation, access, validation, and recovery are covered in [SETUP.md](SETUP.md#prometheus-host-monitoring).
+Grafana runs as a separate Helm release on Yeti, with its own node-local database PVC and a provisioned Prometheus datasource. Its UI is available through localhost port-forwarding; Yeti's desktop browser reaches the cluster-internal Service directly. Administrator credentials are supplied through a private Secret. Both releases retain their PVCs on Helm uninstall, but there is no monitoring backup or node failover. Installation, access, validation, and recovery are covered in [SETUP.md](SETUP.md#prometheus-host-monitoring).
 
-Dashboard JSON is versioned alongside Grafana values and published through a repeatable API script. The node-basics dashboard is the initial example; a broader system dashboard and GitOps remain planned work.
+Dashboard JSON is versioned alongside Grafana values and published through a repeatable API script. The node-basics dashboard is the minimal example; the Operations dashboard provides an eight-panel passive overview of host and workload state. Yeti displays the dashboard with screen blanking/dimming disabled. Automatic browser startup, end-to-end service probes, and GitOps remain planned work.
 
 ### Workstation inference
 
