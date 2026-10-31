@@ -47,6 +47,12 @@ Administration uses SSH and private kubeconfig copies. Standalone kubectl works 
 
 IT-Tools is the first application, deployed from [apps/it-tools](../apps/it-tools). It has one stateless replica, a ClusterIP Service, and a hostless Traefik Ingress. The hostless rule is suitable while it is the only application using that route; assign explicit hostnames before sharing the ingress with more applications.
 
+### Host monitoring
+
+Prometheus runs on Bronco as a pinned standalone Helm release, with Node Exporter on both Linux nodes and kube-state-metrics on Bronco. It collects host metrics and Kubernetes object state every 30 seconds, retaining up to 48 hours on a node-local PVC. Node Exporter listens on host TCP 9100; the Prometheus UI/API is reached through localhost port-forwarding.
+
+Grafana runs as a separate Helm release on Yeti, with its own node-local database PVC and a provisioned Prometheus datasource. Its UI also uses localhost port-forwarding; administrator credentials are supplied through a private Secret. Both releases retain their PVCs on Helm uninstall, but there is no monitoring backup or node failover. Installation, access, validation, and recovery are covered in [SETUP.md](SETUP.md#prometheus-host-monitoring).
+
 ### Workstation inference
 
 Longhorn exposes an authenticated OpenAI-compatible API at `http://longhorn.local:19331/v1` to devices on the home LAN. A user systemd service in WSL runs llama.cpp's model router, loading one model at a time and releasing model memory after 30 idle minutes. Windows provides LAN forwarding and a logon task that keeps WSL available; stopping the inference service releases the GPU for gaming. Configuration, model selection, client setup, and lifecycle limits are documented in [INFERENCE.md](INFERENCE.md).
@@ -55,11 +61,13 @@ Longhorn exposes an authenticated OpenAI-compatible API at `http://longhorn.loca
 
 This is a learning platform with a single control-plane node and node-local storage. The current recovery policy treats cluster state, secrets, and application data as disposable; there are no cluster backups. Versioned configuration and scripts reproduce the infrastructure. Revisit that policy before storing data that must survive a rebuild.
 
-Inference is independent of k3s but depends on Longhorn being awake and WSL being available. Cluster clients must tolerate inference being stopped for gaming. A GPU-capable cluster node, GitOps, monitoring, and household DNS remain backlog items rather than architectural dependencies.
+Inference is independent of k3s but depends on Longhorn being awake and WSL being available. Cluster clients must tolerate inference being stopped for gaming. A GPU-capable cluster node, GitOps, and household DNS remain backlog items rather than architectural dependencies.
 
 ## Validation boundaries
 
 The cluster's recorded checks established node readiness, API readiness, secrets encryption, SSH access after laptop reboots, and operation with the lids closed. IT-Tools was validated through both LAN ingress and cluster DNS across nodes. These are historical checks, not a statement of live node health; see [the bootstrap log](../logs/2026_09_07.md) and [application validation](../logs/2026_09_19.md).
+
+Monitoring validation on 2026-10-30 covered host and Kubernetes object-state metrics, authenticated Grafana queries, persistence across application restarts. Full uninstall/reinstall and node-loss recovery remain untested; dated evidence is in [the daily log](../logs/2026_10_30.md).
 
 Inference was validated locally and from bronco and yeti on 2026-10-30, including authentication and service stop/start. Full Windows reboot/login and sleep/resume recovery remain untested. Cluster node-failure recovery, a complete firewall audit, and package-update completeness also remain open.
 

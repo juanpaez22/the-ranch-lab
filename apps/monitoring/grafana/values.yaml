@@ -1,0 +1,43 @@
+# Pinned chart: see version.txt. Credentials are managed outside Helm/Git.
+replicas: 1
+deploymentStrategy:
+  type: Recreate
+nodeSelector:
+  kubernetes.io/hostname: yeti
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+service:
+  type: ClusterIP
+ingress:
+  enabled: false
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: local-path
+  annotations:
+    helm.sh/resource-policy: keep
+admin:
+  existingSecret: grafana-admin
+  userKey: admin-user
+  passwordKey: admin-password
+grafana.ini:
+  auth.anonymous:
+    enabled: false
+  users:
+    allow_sign_up: false
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        uid: prometheus
+        type: prometheus
+        url: http://prometheus-server.monitoring.svc.cluster.local:80
+        access: proxy
+        isDefault: true
+        editable: false

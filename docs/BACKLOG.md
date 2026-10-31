@@ -41,7 +41,11 @@ Bootstrap, lid behavior, hardware inventory, and workstation administration are 
 
 ### Observability and system-health display
 
-- Run Prometheus and Grafana for cluster, Linux/Windows host, GPU, and inference health. Start with availability, CPU/RAM/disk, GPU utilization/VRAM/temperature/power, and inference readiness/latency; choose exporters and retention to fit the laptops' resources.
+- [x] Deploy standalone Prometheus via Helm with Node Exporter for Bronco/Yeti host metrics. See [setup](SETUP.md#prometheus-host-monitoring).
+- [x] Add kube-state-metrics to expose Kubernetes workload, node, and storage object state through Prometheus. Actual container CPU/memory monitoring remains separate.
+- [x] Add Grafana as a separate Helm release with a provisioned Prometheus datasource.
+- Save dashboard JSON in Git and add a repeatable API publisher before building the system dashboard.
+- Build a homelab system dashboard using available host and Kubernetes object state before adding more exporters.
 - Keep a system-health dashboard visible on one laptop screen. Choose the laptop later, and configure a browser display that recovers after login/reboot without interrupting its existing k3s role. Verify screen-power, session, and resource behavior separately from server uptime.
 - Distinguish expected inference shutdown for gaming from failures. Add actionable alerts after the basic dashboards work; avoid routine notifications for deliberately unloaded models.
 
@@ -97,5 +101,5 @@ Adapted from prior personal project notes. Private datasets and personal workflo
 - [Ollama FAQ](https://docs.ollama.com/faq), including `OLLAMA_HOST` configuration for LAN service exposure.
 - [llama.cpp server documentation](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md), including router mode, model presets, load/unload endpoints, the Web UI, and idle sleep.
 - [Hermes model providers](https://hermes-agent.nousresearch.com/docs/integrations/providers), including custom OpenAI-compatible inference endpoints.
-- [Prometheus overview](https://prometheus.io/docs/introduction/overview/) and [Grafana overview](https://grafana.com/docs/grafana/latest/introduction/), for the planned monitoring stack.
+- [Prometheus overview](https://prometheus.io/docs/introduction/overview/) and [Grafana overview](https://grafana.com/docs/grafana/latest/introduction/), for the monitoring stack.
 - [Pi-hole configuration](https://docs.pi-hole.net/ftldns/configfile/), for the planned LAN DNS service.

@@ -1,0 +1,141 @@
+# Pinned chart: see version.txt. Host/object metrics and self-monitoring only.
+rbac:
+  create: true
+configmapReload:
+  prometheus:
+    enabled: true
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+prometheus-node-exporter:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - bronco
+            - yeti
+kube-state-metrics:
+  enabled: true
+  replicas: 1
+  nodeSelector:
+    kubernetes.io/hostname: bronco
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  collectors:
+  - cronjobs
+  - daemonsets
+  - deployments
+  - horizontalpodautoscalers
+  - ingresses
+  - jobs
+  - namespaces
+  - nodes
+  - persistentvolumeclaims
+  - persistentvolumes
+  - poddisruptionbudgets
+  - pods
+  - replicasets
+  - resourcequotas
+  - services
+  - statefulsets
+  - storageclasses
+alertmanager:
+  enabled: false
+prometheus-pushgateway:
+  enabled: false
+server:
+  replicaCount: 1
+  image:
+    repository: quay.io/prometheus/prometheus
+    tag: v3.15.1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  strategy:
+    type: Recreate
+  service:
+    type: ClusterIP
+  persistentVolume:
+    enabled: true
+    size: 5Gi
+    storageClass: local-path
+    annotations:
+      helm.sh/resource-policy: keep
+  retention: 48h
+  retentionSize: 3GB
+  nodeSelector:
+    kubernetes.io/hostname: bronco
+  global:
+    scrape_interval: 30s
+    scrape_timeout: 10s
+scrapeConfigs:
+  kubernetes-api-servers:
+    enabled: false
+  kubernetes-nodes:
+    enabled: false
+  kubernetes-nodes-cadvisor:
+    enabled: false
+  kubernetes-service-endpoints:
+    enabled: false
+  kubernetes-service-endpoints-slow:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  kubernetes-services:
+    enabled: false
+  kubernetes-pods:
+    enabled: false
+  kubernetes-pods-slow:
+    enabled: false
+  prometheus:
+    enabled: true
+  node-exporter:
+    enabled: true
+    kubernetes_sd_configs:
+    - role: node
+    relabel_configs:
+    - source_labels:
+      - __meta_kubernetes_node_name
+      regex: bronco|yeti
+      action: keep
+    - source_labels:
+      - __address__
+      regex: (.+):[0-9]+
+      replacement: ${1}:9100
+      target_label: __address__
+    - source_labels:
+      - __meta_kubernetes_node_name
+      target_label: node
+    - source_labels:
+      - __meta_kubernetes_node_name
+      target_label: instance
+  kube-state-metrics:
+    enabled: true
+    static_configs:
+    - targets:
+      - prometheus-kube-state-metrics.monitoring.svc.cluster.local:8080
