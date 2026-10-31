@@ -438,6 +438,27 @@ Datasource provisioning uses a `datasources` list inside `datasources.yaml`. Val
 
 Inspect the Grafana PVC's keep annotation before `helm uninstall grafana -n monitoring`. The PVC and external `grafana-admin` Secret are retained, and Prometheus is a separate release. Do not delete the shared namespace. To reuse retained data on redeployment, inspect the claim and add `--set persistence.existingClaim=grafana` to the pinned install command. Live uninstall/reinstall remains untested. Deleting the claim is a separate destructive step that can remove its backing data under the local-path provisioner's Delete reclaim policy.
 
+### Dashboard source and publication
+
+Dashboard JSON in [apps/monitoring/grafana/dashboards/](../apps/monitoring/grafana/dashboards/) is the source of truth. [node-basics.json](../apps/monitoring/grafana/dashboards/node-basics.json) establishes a minimal example: two stat panels show uptime and memory used for each node, using datasource UID `prometheus`. Memory used means `100 * (1 - MemAvailable / MemTotal)`, including reclaimable memory correctly. Uptime uses exporter host time minus boot time. Missing data is not converted to zero.
+
+With the Grafana localhost port-forward running, publish and check:
+
+```bash
+python3 scripts/monitoring/publish_dashboards.py
+python3 scripts/monitoring/publish_dashboards.py --check
+```
+
+The publisher requires Python 3 and uses only its standard library and the existing private admin password file. Optional `--endpoint`, `--password-file`, and explicit JSON file paths select a tunnel, credential location, or subset. It uses bounded requests and keeps credentials out of process arguments. It does not start a port-forward. The current publisher targets the installed Grafana 12.3 legacy dashboard API (`POST /api/dashboards/db`); review API compatibility when upgrading Grafana.
+
+Publication creates or updates dashboards by stable UID, verifies the saved authored fields, and skips unchanged definitions. It does not delete dashboards, touch Helm resources, or create public shares. Each JSON file is a classic Grafana dashboard model, not an API response/wrapper: retain stable `uid` and panel IDs, reference datasource UID `prometheus`, and omit instance-specific numeric IDs/revisions (`id: null`, `version: 0` are also accepted). Files are published to the default dashboard folder. Keep credentials, concrete LAN addresses, query results, and exported instance metadata out of these files.
+
+`--check` is read-only: it compares saved definitions and runs each literal PromQL expression through Grafana, requiring nonempty finite instant-vector results. It is a smoke check, not proof of correct units/labels or visual layout. Variable-based queries require explicit bindings and a dedicated validation procedure. The example was additionally checked for exactly Bronco/Yeti values and valid uptime/percentage ranges. No browser-rendered visual check has been performed.
+
+Treat UI edits as experiments: copy intentional changes back into the JSON and review them before publishing. A later publish replaces differing authored fields for the same UID. Existing dashboard data survives a normal Grafana pod restart via its PVC; replaying the publisher recreates repo dashboards after a clean installation once credentials/datasource are restored. Helm install alone does not publish them. For rollback, restore a prior JSON revision and republish it; renaming/removing a file does not delete the old dashboard automatically.
+
+To add a dashboard, copy the example to a new file with a distinct UID, validate its PromQL against available host/KSM metrics, and publish/check that file. Keep dashboard development separate from deployment configuration changes.
+
 References: [Grafana Helm installation](https://grafana.com/docs/grafana/latest/setup-grafana/installation/helm/), [file provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/), and [administrator CLI](https://grafana.com/docs/grafana/latest/administration/cli/).
 
 ## Local WSL inference

@@ -44,10 +44,18 @@ Bootstrap, lid behavior, hardware inventory, and workstation administration are 
 - [x] Deploy standalone Prometheus via Helm with Node Exporter for Bronco/Yeti host metrics. See [setup](SETUP.md#prometheus-host-monitoring).
 - [x] Add kube-state-metrics to expose Kubernetes workload, node, and storage object state through Prometheus. Actual container CPU/memory monitoring remains separate.
 - [x] Add Grafana as a separate Helm release with a provisioned Prometheus datasource.
-- Save dashboard JSON in Git and add a repeatable API publisher before building the system dashboard.
-- Build a homelab system dashboard using available host and Kubernetes object state before adding more exporters.
+- [x] Establish repository-managed dashboard JSON and an idempotent API publisher with a node uptime/memory example.
+- Build a homelab system dashboard using the example and publisher; include useful host and Kubernetes object state before adding more exporters.
 - Keep a system-health dashboard visible on one laptop screen. Choose the laptop later, and configure a browser display that recovers after login/reboot without interrupting its existing k3s role. Verify screen-power, session, and resource behavior separately from server uptime.
 - Distinguish expected inference shutdown for gaming from failures. Add actionable alerts after the basic dashboards work; avoid routine notifications for deliberately unloaded models.
+
+### Longhorn metrics export
+
+- Export Longhorn host/GPU and llama.cpp serving metrics to the existing Prometheus over the LAN. Keep exporters and inference under standalone supervision initially; joining WSL to k3s is a separate decision.
+- Inspect telemetry available from the installed Windows/WSL NVIDIA stack and llama.cpp build before choosing exporters. Candidate metrics include GPU power, utilization, VRAM, temperature, prompt/generation throughput, request latency/counts, loaded model, and service readiness. Distinguish GPU watts from whole-machine electricity use, per-request speed from aggregate throughput, and inference shutdown for gaming from failures.
+- Version configuration, restrict/authenticate metrics endpoints as supported, verify scrape behavior from the cluster, and document startup, stop, rollback, and Windows sleep/reboot boundaries. Avoid high-cardinality request/prompt labels and never expose prompt content or credentials as metrics.
+- Add Grafana panels after verifying units and semantics. Use a metered power device if whole-PC consumption is needed.
+- References: [llama.cpp server metrics](https://github.com/ggml-org/llama.cpp/blob/b11552/tools/server/README.md), [Windows Exporter](https://github.com/prometheus-community/windows_exporter), and [CUDA on WSL limitations](https://docs.nvidia.com/cuda/wsl-user-guide/). Exporter compatibility with this WSL/GPU setup remains to be tested.
 
 ### Life and sports display
 
