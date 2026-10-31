@@ -32,6 +32,9 @@ __pycache__/
 node_modules/
 benchmarks/llama-context-sweep/results/*/logs/
 benchmarks/llama-context-sweep/results/*/responses/
+benchmarks/coding-eval/results/
+benchmarks/ranch-sim-eval/prompts/
+benchmarks/ranch-sim-eval/results/
 
 # Editor and OS state
 .vscode/

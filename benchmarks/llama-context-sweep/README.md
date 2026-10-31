@@ -2,7 +2,7 @@
 
 This benchmark measures one fixed, medium-sized portfolio-site generation task across models and configured context sizes. It records llama.cpp's prompt-processing and generation timings separately.
 
-The default matrix uses one server slot, Flash Attention, Q4_0 K/V cache, automatic GPU fitting with a 1024 MiB target margin, three measured requests, and context sizes from 4K through 256K. The prompt is identical at every point, prompt caching is disabled, and model thinking is disabled so the generated tokens belong to the requested HTML. This isolates the effect of allocating a larger context window; it is not a filled-context benchmark.
+The default matrix uses one server slot, Flash Attention, Q4_0 K/V cache, automatic GPU fitting with a 1024 MiB target margin, three measured requests, and context sizes from 4K through 256K. The prompt is identical at every point, prompt caching is disabled, and the request asks the model template to disable thinking. Not every model implements that template argument: GPT-OSS still emits reasoning tokens, as recorded in its comparison report. This isolates the effect of allocating a larger context window; it is not a filled-context benchmark.
 
 ## Run
 
@@ -45,7 +45,7 @@ Each run creates a timestamped directory under `results/` containing:
 
 Compare the median `generation_tps` for successful repetitions. Also inspect `generated_tokens` and `finish_reason`; a very short completion is a weaker throughput sample. `prompt_tps` uses uncached prompt evaluation but the portfolio prompt is small, so it should not be generalized to long-prompt ingestion.
 
-Quantization is part of the result. The Gemma models use official Q4_0 files to match the already-downloaded 26B-A4B model. Qwen3.8 uses its official Q4_K_M file because the ggml-org repository does not publish a base-model Q4_0 file.
+Quantization is part of the result. The Gemma models use official Q4_0 files to match the already-downloaded 26B-A4B model. Qwen3.8 uses its official Q4_K_M file because the ggml-org repository does not publish a base-model Q4_0 file. GPT-OSS uses the publisher's native MXFP4 weights, so its result is not a controlled comparison of weight quantizers with Gemma.
 
 The script skips requested contexts above a model's published native ceiling. It records load failures, request failures, and any actual-context mismatch rather than silently lowering the requested size. A failed request or response missing timing fields stops that point and releases the server; resume can retry the incomplete point. Resume mode requires the same host, GPU and driver, llama.cpp build, prompt, model manifest, repetition target, output-token limit, and recorded inference settings so incompatible measurements are not mixed.
 

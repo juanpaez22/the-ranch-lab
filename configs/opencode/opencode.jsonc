@@ -63,6 +63,13 @@
           "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
           "limit": { "context": 131072, "input": 122880, "output": 8192 },
           "compatibility": { "reasoningField": "reasoning_content" }
+        },
+        "gpt-oss-20b-mxfp4": {
+          "modelID": "gpt-oss-20b-mxfp4",
+          "name": "GPT-OSS 20B MXFP4",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 131072, "input": 122880, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
         }
       }
     }

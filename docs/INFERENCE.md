@@ -1,6 +1,6 @@
 # Local inference
 
-Last updated: 2026-10-30
+Last updated: 2026-10-31
 
 Longhorn provides local GPU inference for OpenCode and other OpenAI-compatible clients on the home LAN. The service is designed for a shared gaming workstation: models can be switched without changing client endpoints, and inference can be stopped when another application needs the GPU.
 
@@ -89,6 +89,7 @@ The installed presets use cached instruction-tuned GGUFs, text input/output, Fla
 | `gemma-4-12b-q4` | Gemma 4 12B Q4_0 | OpenCode tool-use issue noted below |
 | `gemma-4-31b-q4` | Gemma 4 31B Q4_0 | Substantial CPU offload on this GPU |
 | `qwen3.8-27b-q4` | Qwen3.8 27B Q4_K_M | Substantial CPU offload on this GPU |
+| `gpt-oss-20b-mxfp4` | GPT-OSS 20B MXFP4 | 128K reasoning/coding alternative; benchmarked below |
 
 All current presets allocate one 128K slot. The model's native ceiling, the server allocation, and the client's request budget are separate limits. OpenCode declares 131,072 total tokens, up to 122,880 input tokens, and up to 8,192 output tokens, with automatic conversation compaction. Change client and server limits together, and verify the actual allocation through `/props?model=<id>`. The default model supports up to 256K natively; E4B's ceiling is 128K.
 
@@ -96,12 +97,18 @@ OpenCode assembles instructions, conversation, files, and tool results into each
 
 ### OpenCode
 
-The versioned [provider configuration](../configs/opencode/opencode.jsonc) contains all five model entries. It reads authentication from `~/.config/llama.cpp/api.key` rather than embedding a credential.
+The versioned [provider configuration](../configs/opencode/opencode.jsonc) contains all six model entries. It reads authentication from `~/.config/llama.cpp/api.key` rather than embedding a credential.
 
 Select a model through `/models` in the interactive client, or pass its provider/model ID:
 
 ```bash
 opencode --model llama-cpp/gemma-4-e4b-q4
+```
+
+GPT-OSS is available without changing the default:
+
+```bash
+opencode --model llama-cpp/gpt-oss-20b-mxfp4
 ```
 
 Ensure `~/.opencode/bin` is on PATH, or use `~/.opencode/bin/opencode` directly. Restart existing OpenCode sessions after installing configuration changes.
@@ -140,7 +147,7 @@ ctx-size = 32768
 
 Its OpenCode entry must declare a 32,768-token context budget. Model-specific settings inherit from `[*]`; router command-line arguments take precedence over presets. Keep settings that vary by model in the preset file.
 
-The [benchmark report](INFERENCE_BENCHMARK_2026_10_11.md) records throughput across context allocations, not model quality or filled-context performance. To repeat it, stop the router, run [the benchmark harness](../benchmarks/llama-context-sweep/README.md), and start the router again afterward.
+The original [context benchmark](INFERENCE_BENCHMARK_2026_10_11.md) records throughput across context allocations. The later [GPT-OSS comparison](INFERENCE_BENCHMARK_2026_10_31.md) adds fresh 4K/128K measurements and a small coding evaluation against the Gemma default. Neither is a general quality ranking or a filled-context benchmark. To repeat the throughput test, stop the router, run [the benchmark harness](../benchmarks/llama-context-sweep/README.md), and start the router again afterward.
 
 ## Installation
 
@@ -365,4 +372,4 @@ When changing ports, migrate the service, clients, Windows listener, and firewal
 - [llama.cpp server documentation for b11552](https://github.com/ggml-org/llama.cpp/blob/b11552/tools/server/README.md), covering router presets, management APIs, and idle sleep.
 - [Microsoft WSL networking](https://learn.microsoft.com/en-us/windows/wsl/networking) and [systemd lifecycle](https://devblogs.microsoft.com/commandline/systemd-support-is-now-available-in-wsl/).
 - [OpenCode configuration variables](https://opencode.ai/v2/docs/config#files) and [custom providers](https://opencode.ai/v2/docs/providers#custom).
-- [Workstation benchmark report](INFERENCE_BENCHMARK_2026_10_11.md) and [benchmark harness](../benchmarks/llama-context-sweep/README.md).
+- [Original workstation benchmark](INFERENCE_BENCHMARK_2026_10_11.md), [GPT-OSS comparison](INFERENCE_BENCHMARK_2026_10_31.md), and [benchmark harness](../benchmarks/llama-context-sweep/README.md).

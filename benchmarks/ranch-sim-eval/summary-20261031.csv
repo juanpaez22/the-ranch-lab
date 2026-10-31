@@ -1,0 +1,9 @@
+model,profile,phase,prompt_tokens,completion_tokens,prompt_seconds,generation_seconds,generation_tps,finish_reason,passed,total,error
+gemma-4-26b-a4b-q4,8k,initial,8629,2442,3.14,29.98,81.41,stop,15,16,
+gpt-oss-20b-mxfp4,8k,initial,7833,3746,1.49,28.56,131.13,stop,0,16,SyntaxError: unmatched ')'
+gemma-4-26b-a4b-q4,32k,initial,33286,2425,11.61,34.44,70.39,stop,16,16,
+gpt-oss-20b-mxfp4,32k,initial,29814,3282,3.60,41.73,78.62,stop,15,16,
+gemma-4-26b-a4b-q4,60k,initial,62188,2431,21.56,39.98,60.78,stop,15,16,
+gpt-oss-20b-mxfp4,60k,initial,55581,2956,7.65,53.97,54.75,stop,13,16,
+gemma-4-26b-a4b-q4,60k,repair,64697,2363,24.46,39.14,60.35,stop,15,16,
+gpt-oss-20b-mxfp4,60k,repair,58039,8192,8.64,167.56,48.88,length,0,16,"response is missing required definitions: class SimulationError, class Animal, class Plot, class RanchState, class RanchSimulator"

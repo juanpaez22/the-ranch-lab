@@ -1,0 +1,8 @@
+model_id,label,hf_ref,quantization,native_context,configured_context,actual_context,status,repeat,prompt_tokens,generated_tokens,prompt_tps,generation_tps,total_seconds,gpu_memory_used_mib,gpu_memory_free_mib,finish_reason
+"gpt-oss-20b","GPT-OSS 20B","ggml-org/gpt-oss-20b-GGUF:MXFP4","MXFP4","131072","4096","4096","ok","1","331","1024","4372.40759821405","168.85420619458907","6.151489024","12515","3463","length"
+"gpt-oss-20b","GPT-OSS 20B","ggml-org/gpt-oss-20b-GGUF:MXFP4","MXFP4","131072","4096","4096","ok","2","331","1024","4716.981132075472","179.21705796016298","5.803766016","12515","3463","length"
+"gpt-oss-20b","GPT-OSS 20B","ggml-org/gpt-oss-20b-GGUF:MXFP4","MXFP4","131072","4096","4096","ok","3","331","1024","4221.9926274569825","176.81925494277223","5.8804928","12515","3463","length"
+"gpt-oss-20b","GPT-OSS 20B","ggml-org/gpt-oss-20b-GGUF:MXFP4","MXFP4","131072","131072","","port_busy","","","","","","","","",""
+"gpt-oss-20b","GPT-OSS 20B","ggml-org/gpt-oss-20b-GGUF:MXFP4","MXFP4","131072","131072","131072","ok","1","331","1024","4691.8410160458125","179.27054238013451","5.791757824","13743","2235","length"
+"gpt-oss-20b","GPT-OSS 20B","ggml-org/gpt-oss-20b-GGUF:MXFP4","MXFP4","131072","131072","131072","ok","2","331","1024","4500.829457996791","177.9001727874992","5.844957696","13743","2235","length"
+"gpt-oss-20b","GPT-OSS 20B","ggml-org/gpt-oss-20b-GGUF:MXFP4","MXFP4","131072","131072","131072","ok","3","331","1024","4509.291046809439","175.7235584999701","5.910573824","13743","2235","length"

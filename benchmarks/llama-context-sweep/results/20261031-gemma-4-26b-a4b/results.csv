@@ -1,0 +1,8 @@
+model_id,label,hf_ref,quantization,native_context,configured_context,actual_context,status,repeat,prompt_tokens,generated_tokens,prompt_tps,generation_tps,total_seconds,gpu_memory_used_mib,gpu_memory_free_mib,finish_reason
+"gemma-4-26b-a4b","Gemma 4 26B-A4B Instruct","ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0","Q4_0","262144","4096","4096","ok","1","295","1024","3054.5258754581787","105.77932530161844","9.790482944","15195","783","length"
+"gemma-4-26b-a4b","Gemma 4 26B-A4B Instruct","ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0","Q4_0","262144","4096","4096","ok","2","295","1024","3313.192120218334","103.3912846705694","10.04376576","15195","783","length"
+"gemma-4-26b-a4b","Gemma 4 26B-A4B Instruct","ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0","Q4_0","262144","4096","4096","ok","3","295","1024","3123.444895020488","103.50019865360709","9.995444992","15195","783","length"
+"gemma-4-26b-a4b","Gemma 4 26B-A4B Instruct","ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0","Q4_0","262144","131072","","port_busy","","","","","","","","",""
+"gemma-4-26b-a4b","Gemma 4 26B-A4B Instruct","ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0","Q4_0","262144","131072","131072","ok","1","295","1024","1563.6594932683136","84.74869030964587","12.274203904","15235","743","length"
+"gemma-4-26b-a4b","Gemma 4 26B-A4B Instruct","ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0","Q4_0","262144","131072","131072","ok","2","295","1024","1775.5788688057876","85.43737127498697","12.186127104","15235","743","length"
+"gemma-4-26b-a4b","Gemma 4 26B-A4B Instruct","ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0","Q4_0","262144","131072","131072","ok","3","295","1024","1667.1281880294546","82.61478124607316","12.574089472","15235","743","length"

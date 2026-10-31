@@ -1,0 +1,19 @@
+{
+  "started_at": "2026-10-31T18:35:37Z",
+  "hostname": "longhorn",
+  "kernel": "Linux 6.18.33.2-microsoft-standard-WSL2 x86_64 GNU/Linux",
+  "llama_version": "version: 0.6.0-dev (build 11552, commit 23b0202a1) built with GNU 13.3.0 for Linux x86_64 ",
+  "gpu": "NVIDIA GeForce RTX 5080, 610.88, 16303 MiB",
+  "prompt_sha256": "96e65ba95bbcf4d344652ef5a9b69d74846e6a584462ca025b93eb2609695078",
+  "manifest_sha256": "59534efdc272288d742add50efa1daa8abe8bbf28e49fe490391e83a0de4b1a2",
+  "repeats": 3,
+  "output_tokens": 1024,
+  "contexts": "4096,131072",
+  "parallel": 1,
+  "flash_attention": true,
+  "kv_cache": "q4_0",
+  "fit_target_mib": 1024,
+  "prompt_cache": false,
+  "thinking": false,
+  "finished_at": "2026-10-31T18:37:40Z"
+}

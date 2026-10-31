@@ -4,3 +4,4 @@ gemma-4-12b	Gemma 4 12B Unified Instruct	ggml-org/gemma-4-12B-it-GGUF:Q4_0	Q4_0	
 gemma-4-26b-a4b	Gemma 4 26B-A4B Instruct	ggml-org/gemma-4-26B-A4B-it-GGUF:Q4_0	Q4_0	262144
 gemma-4-31b	Gemma 4 31B Dense Instruct	ggml-org/gemma-4-31B-it-GGUF:Q4_0	Q4_0	262144
 qwen3.8-27b	Qwen3.8 27B	ggml-org/Qwen3.8-27B-GGUF:Q4_K_M	Q4_K_M	262144
+gpt-oss-20b	GPT-OSS 20B	ggml-org/gpt-oss-20b-GGUF:MXFP4	MXFP4	131072

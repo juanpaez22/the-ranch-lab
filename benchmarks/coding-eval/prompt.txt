@@ -1,0 +1,16 @@
+Implement this Python function:
+
+    def find_missing_ranges(nums, lower, upper):
+
+Return the inclusive integer ranges within `[lower, upper]` that are not
+present in `nums`. Return a list of `(start, end)` tuples in ascending order.
+
+Requirements:
+
+- `nums` may be unsorted and may contain duplicates or values outside the
+  requested bounds.
+- If `lower > upper`, return an empty list.
+- Do not mutate `nums`.
+- Use only the Python standard language; no imports are needed.
+- Return only a complete Python code block defining the function. Do not add
+  tests or commentary.
