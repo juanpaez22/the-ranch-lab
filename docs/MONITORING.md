@@ -40,7 +40,9 @@ Longhorn WSL GPU exporter ---+
         via scoped Windows forwarding
 ```
 
-`Ranch / Operations` summarizes cluster and Linux-node health. `Ranch / Longhorn GPU` shows utilization, power, temperature, VRAM, and clocks. The GPU dashboard uses `job="nvidia-gpu-exporter"` and the stable `instance="longhorn"` label. Missing Longhorn data is not converted into a healthy zero.
+`Ranch / Operations` is the always-on homelab homepage shown on Yeti. Fleet and Kubernetes status lead into equal-width Bronco, Yeti, and Longhorn resource quadrants, followed by Linux storage/thermals and Longhorn GPU power/temperature. The machine-centric layout leaves Longhorn's quadrant ready for inference throughput, queue, and model-state metrics later.
+
+`Ranch / Longhorn GPU` remains the deeper GPU-only view with utilization, power, temperature, VRAM, and clocks. Both dashboards use `job="nvidia-gpu-exporter"` and the stable `instance="longhorn"` label. Missing Longhorn data is not converted into a healthy zero.
 
 The live GPU dashboard definition and all 11 literal PromQL queries were API-validated on 2026-11-01. This does not constitute browser-rendered layout validation.
 

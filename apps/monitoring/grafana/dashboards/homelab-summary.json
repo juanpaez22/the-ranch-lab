@@ -2,7 +2,7 @@
   "id": null,
   "uid": "ranch-homelab-summary",
   "title": "Ranch / Operations",
-  "description": "Always-on overview: health first, resource trends second, disk/LAN/thermals last. Cyan = Bronco, violet = Yeti in trend panels. Unknown telemetry is never converted to a healthy zero. Workload state is not an end-to-end service check.",
+  "description": "Always-on homelab homepage: fleet and Kubernetes health first, one resource quadrant per machine, then storage and thermal detail. Cyan = Bronco, violet = Yeti, orange = Longhorn. Missing telemetry is never converted to a healthy zero.",
   "tags": [
     "ranch-lab",
     "repository-managed",
@@ -30,9 +30,9 @@
   "panels": [
     {
       "id": 1,
-      "title": "Nodes ready + reachable",
+      "title": "Machines",
       "type": "stat",
-      "description": "Ready requires a successful host scrape and Kubernetes Ready state. A missing host target is treated as unhealthy when KSM still knows the node. Missing/down KSM yields NO TELEMETRY, not a healthy zero.",
+      "description": "Bronco and Yeti require both a healthy Node Exporter scrape and Kubernetes Ready state. Longhorn represents its external GPU telemetry path, so it can be unavailable during sleep, restart, or deliberate workstation downtime.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -41,7 +41,7 @@
       "gridPos": {
         "x": 0,
         "y": 0,
-        "w": 8,
+        "w": 12,
         "h": 4
       },
       "targets": [
@@ -51,7 +51,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "min by(node) (((up{job=\"node-exporter\"} or on(node) (0 * kube_node_info{job=\"kube-state-metrics\"})) * on(node) kube_node_status_condition{job=\"kube-state-metrics\",condition=\"Ready\",status=\"true\"}) and on() (up{job=\"kube-state-metrics\"} == 1))",
+          "expr": "min by(node) (((up{job=\"node-exporter\"} or on(node) (0 * kube_node_info{job=\"kube-state-metrics\"})) * on(node) kube_node_status_condition{job=\"kube-state-metrics\",condition=\"Ready\",status=\"true\"}) and on() (up{job=\"kube-state-metrics\"} == 1)) or up{job=\"nvidia-gpu-exporter\",node=\"longhorn\"}",
           "legendFormat": "{{node}}",
           "instant": true,
           "range": false,
@@ -80,12 +80,12 @@
               "type": "value",
               "options": {
                 "0": {
-                  "text": "CHECK NODE",
+                  "text": "CHECK",
                   "color": "red",
                   "index": 0
                 },
                 "1": {
-                  "text": "READY",
+                  "text": "ONLINE",
                   "color": "green",
                   "index": 1
                 }
@@ -110,25 +110,25 @@
         "justifyMode": "center",
         "text": {
           "titleSize": 16,
-          "valueSize": 42
+          "valueSize": 38
         },
         "wideLayout": true
       }
     },
     {
       "id": 2,
-      "title": "Workload replica shortfall",
+      "title": "Kubernetes",
       "type": "stat",
-      "description": "Missing available Deployment replicas plus missing available DaemonSet instances across the cluster. Zero means desired replicas are available; it does not prove application HTTP health. KSM must be reachable.",
+      "description": "All values should be zero. Missing KSM data produces NO TELEMETRY rather than a healthy zero. Replica state does not prove end-to-end service availability.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "transparent": false,
       "gridPos": {
-        "x": 8,
+        "x": 12,
         "y": 0,
-        "w": 8,
+        "w": 12,
         "h": 4
       },
       "targets": [
@@ -138,8 +138,32 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
+          "expr": "(2 - sum(kube_node_status_condition{job=\"kube-state-metrics\",condition=\"Ready\",status=\"true\"})) and on() (up{job=\"kube-state-metrics\"} == 1)",
+          "legendFormat": "Nodes not ready",
+          "instant": true,
+          "range": false,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "expr": "(sum(clamp_min(kube_deployment_spec_replicas{job=\"kube-state-metrics\"} - kube_deployment_status_replicas_available{job=\"kube-state-metrics\"}, 0)) + sum(clamp_min(kube_daemonset_status_desired_number_scheduled{job=\"kube-state-metrics\"} - kube_daemonset_status_number_available{job=\"kube-state-metrics\"}, 0))) and on() (up{job=\"kube-state-metrics\"} == 1)",
           "legendFormat": "Missing replicas",
+          "instant": true,
+          "range": false,
+          "editorMode": "code"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(kube_pod_container_status_restarts_total{job=\"kube-state-metrics\"}[1h])) and on() (up{job=\"kube-state-metrics\"} == 1)",
+          "legendFormat": "Restarts / 1h",
           "instant": true,
           "range": false,
           "editorMode": "code"
@@ -171,7 +195,7 @@
               "type": "value",
               "options": {
                 "0": {
-                  "text": "ALL AVAILABLE",
+                  "text": "OK",
                   "color": "green",
                   "index": 0
                 }
@@ -195,95 +219,17 @@
         "graphMode": "none",
         "justifyMode": "center",
         "text": {
-          "titleSize": 16,
-          "valueSize": 32
+          "titleSize": 15,
+          "valueSize": 34
         },
         "wideLayout": true
       }
     },
     {
       "id": 3,
-      "title": "Container restarts / last hour",
-      "type": "stat",
-      "description": "Estimated counter increase over the last hour, across observed application containers. Rollout-created replacement pods are not themselves container restarts. Prometheus extrapolation can produce fractional estimates; displayed rounded. Missing KSM is unknown.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "transparent": false,
-      "gridPos": {
-        "x": 16,
-        "y": 0,
-        "w": 8,
-        "h": 4
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(increase(kube_pod_container_status_restarts_total{job=\"kube-state-metrics\"}[1h])) and on() (up{job=\"kube-state-metrics\"} == 1)",
-          "legendFormat": "Restarts in 1h",
-          "instant": true,
-          "range": false,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "noValue": "NO TELEMETRY",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1
-              },
-              {
-                "color": "red",
-                "value": 3
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "orientation": "horizontal",
-        "textMode": "value_and_name",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "text": {
-          "titleSize": 16,
-          "valueSize": 42
-        },
-        "wideLayout": true
-      }
-    },
-    {
-      "id": 4,
-      "title": "CPU utilization",
+      "title": "Bronco / resources",
       "type": "timeseries",
-      "description": "Five-minute average busy CPU across cores. Cyan is Bronco; violet is Yeti. The legend shows latest and peak over the visible window. High utilization is activity, not automatically a failure.",
+      "description": "Five-minute CPU utilization and memory pressure on the k3s server.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -292,7 +238,7 @@
       "gridPos": {
         "x": 0,
         "y": 4,
-        "w": 12,
+        "w": 8,
         "h": 7
       },
       "targets": [
@@ -302,8 +248,20 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (1 - avg by(node) (rate(node_cpu_seconds_total{job=\"node-exporter\",mode=\"idle\"}[5m])))",
-          "legendFormat": "{{node}}",
+          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{job=\"node-exporter\",node=\"bronco\",mode=\"idle\"}[5m])))",
+          "legendFormat": "CPU",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"node-exporter\",node=\"bronco\"} / node_memory_MemTotal_bytes{job=\"node-exporter\",node=\"bronco\"})",
+          "legendFormat": "Memory",
           "instant": false,
           "range": true,
           "editorMode": "code"
@@ -314,8 +272,11 @@
           "unit": "percent",
           "decimals": 1,
           "noValue": "NO TELEMETRY",
+          "min": 0,
+          "max": 100,
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "#56D4DD"
           },
           "thresholds": {
             "mode": "absolute",
@@ -326,8 +287,6 @@
               }
             ]
           },
-          "min": 0,
-          "max": 100,
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
@@ -356,31 +315,151 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^bronco(?: |$)"
+              "id": "byName",
+              "options": "Memory"
             },
             "properties": [
               {
-                "id": "color",
+                "id": "custom.lineStyle",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#56D4DD"
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
                 }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Yeti / resources",
+      "type": "timeseries",
+      "description": "Five-minute CPU utilization and memory pressure on the k3s worker and Grafana display host.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "transparent": false,
+      "gridPos": {
+        "x": 8,
+        "y": 4,
+        "w": 8,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{job=\"node-exporter\",node=\"yeti\",mode=\"idle\"}[5m])))",
+          "legendFormat": "CPU",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"node-exporter\",node=\"yeti\"} / node_memory_MemTotal_bytes{job=\"node-exporter\",node=\"yeti\"})",
+          "legendFormat": "Memory",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "noValue": "NO TELEMETRY",
+          "min": 0,
+          "max": 100,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#B39DFF"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
               }
             ]
           },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^yeti(?: |$)"
+              "id": "byName",
+              "options": "Memory"
             },
             "properties": [
               {
-                "id": "color",
+                "id": "custom.lineStyle",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#B39DFF"
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
                 }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
               }
             ]
           }
@@ -404,18 +483,18 @@
     },
     {
       "id": 5,
-      "title": "Memory used",
+      "title": "Longhorn / GPU",
       "type": "timeseries",
-      "description": "100 \u00d7 (1 \u2212 MemAvailable / MemTotal). Uses available memory, including reclaimable memory, rather than treating cache as unavailable. Rising baseline reveals sustained memory demand.",
+      "description": "GPU compute utilization and VRAM allocation. This quadrant can later add inference throughput, queue, and model state.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 16,
         "y": 4,
-        "w": 12,
+        "w": 8,
         "h": 7
       },
       "targets": [
@@ -425,8 +504,20 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"node-exporter\"} / node_memory_MemTotal_bytes{job=\"node-exporter\"})",
-          "legendFormat": "{{node}}",
+          "expr": "100 * nvidia_smi_utilization_gpu_ratio{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
+          "legendFormat": "GPU",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * nvidia_smi_memory_used_bytes{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"} / nvidia_smi_memory_total_bytes{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
+          "legendFormat": "VRAM",
           "instant": false,
           "range": true,
           "editorMode": "code"
@@ -437,8 +528,11 @@
           "unit": "percent",
           "decimals": 1,
           "noValue": "NO TELEMETRY",
+          "min": 0,
+          "max": 100,
           "color": {
-            "mode": "palette-classic"
+            "mode": "fixed",
+            "fixedColor": "#FF9830"
           },
           "thresholds": {
             "mode": "absolute",
@@ -449,8 +543,6 @@
               }
             ]
           },
-          "min": 0,
-          "max": 100,
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
@@ -479,31 +571,23 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^bronco(?: |$)"
+              "id": "byName",
+              "options": "VRAM"
             },
             "properties": [
               {
-                "id": "color",
+                "id": "custom.lineStyle",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#56D4DD"
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
                 }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "^yeti(?: |$)"
-            },
-            "properties": [
+              },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#B39DFF"
-                }
+                "id": "custom.fillOpacity",
+                "value": 0
               }
             ]
           }
@@ -527,9 +611,9 @@
     },
     {
       "id": 6,
-      "title": "Root filesystem headroom",
+      "title": "Linux storage headroom",
       "type": "bargauge",
-      "description": "Space available to non-root processes on /. Below 20% is an early warning; below 10% needs attention. This is the host filesystem, not a PVC quota.",
+      "description": "Available percentage on the root filesystem of each k3s node. Local-path application data consumes these same node filesystems.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -560,6 +644,8 @@
           "unit": "percent",
           "decimals": 0,
           "noValue": "NO TELEMETRY",
+          "min": 0,
+          "max": 100,
           "color": {
             "mode": "thresholds"
           },
@@ -579,9 +665,7 @@
                 "value": 20
               }
             ]
-          },
-          "min": 0,
-          "max": 100
+          }
         },
         "overrides": []
       },
@@ -610,9 +694,9 @@
     },
     {
       "id": 7,
-      "title": "Physical LAN traffic",
+      "title": "Linux thermals",
       "type": "timeseries",
-      "description": "Five-minute RX/TX rates on physical Ethernet/Wi-Fi names only (en*, eth*, wl*). Excludes loopback, CNI, Flannel and veth to avoid counting the same traffic again. Solid = RX, dashed = TX. Current/peak are bytes per second.",
+      "description": "CPU package temperatures from the two k3s laptops. Guide lines are attention thresholds, not measured throttling limits.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -620,161 +704,6 @@
       "transparent": false,
       "gridPos": {
         "x": 8,
-        "y": 11,
-        "w": 8,
-        "h": 6
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by(node) (rate(node_network_receive_bytes_total{job=\"node-exporter\",device=~\"en.*|eth.*|wl.*\"}[5m]))",
-          "legendFormat": "{{node}} RX",
-          "instant": false,
-          "range": true,
-          "editorMode": "code"
-        },
-        {
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by(node) (rate(node_network_transmit_bytes_total{job=\"node-exporter\",device=~\"en.*|eth.*|wl.*\"}[5m]))",
-          "legendFormat": "{{node}} TX",
-          "instant": false,
-          "range": true,
-          "editorMode": "code"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "decimals": 0,
-          "noValue": "NO TELEMETRY",
-          "color": {
-            "mode": "palette-classic"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "min": 0,
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "spanNulls": false,
-            "axisPlacement": "auto",
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            },
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "^bronco(?: |$)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#56D4DD"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "^yeti(?: |$)"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#B39DFF"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": ".* TX$"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    6,
-                    4
-                  ]
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              }
-            ]
-          }
-        ]
-      },
-      "options": {
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": [
-            "lastNotNull"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "id": 8,
-      "title": "CPU package temperature",
-      "type": "timeseries",
-      "description": "CPU-package sensor only (Package id / Tctl / Tdie), not the maximum of unrelated NVMe/Wi-Fi sensors. Guide lines at 75/90 \u00b0C are attention thresholds, not measured throttling limits. No additional exporter is needed.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "transparent": false,
-      "gridPos": {
-        "x": 16,
         "y": 11,
         "w": 8,
         "h": 6
@@ -798,6 +727,8 @@
           "unit": "celsius",
           "decimals": 1,
           "noValue": "NO TELEMETRY",
+          "min": 0,
+          "max": 105,
           "color": {
             "mode": "palette-classic"
           },
@@ -818,8 +749,6 @@
               }
             ]
           },
-          "min": 0,
-          "max": 105,
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
@@ -848,8 +777,8 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^bronco(?: |$)"
+              "id": "byName",
+              "options": "bronco"
             },
             "properties": [
               {
@@ -863,8 +792,8 @@
           },
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^yeti(?: |$)"
+              "id": "byName",
+              "options": "yeti"
             },
             "properties": [
               {
@@ -872,6 +801,138 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "#B39DFF"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Longhorn / power + thermals",
+      "type": "timeseries",
+      "description": "GPU board power draw and GPU temperature. Power is not whole-workstation electricity consumption.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "transparent": false,
+      "gridPos": {
+        "x": 16,
+        "y": 11,
+        "w": 8,
+        "h": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "nvidia_smi_power_draw_watts{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
+          "legendFormat": "Power",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "nvidia_smi_temperature_gpu{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
+          "legendFormat": "Temperature",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "noValue": "NO TELEMETRY",
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FF9830"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisPlacement": "auto",
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temperature"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
                 }
               }
             ]
