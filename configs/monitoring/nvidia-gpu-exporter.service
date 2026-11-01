@@ -1,0 +1,17 @@
+[Unit]
+Description=Longhorn WSL NVIDIA GPU metrics exporter
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/nvidia_gpu_exporter --web.listen-address=127.0.0.1:9835 --nvidia-smi-command=/usr/lib/wsl/lib/nvidia-smi --collect.interval=15s
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=default.target

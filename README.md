@@ -6,6 +6,7 @@ A simple homelab repository for sharing operational scripts, documenting progres
 - [Backlog](docs/BACKLOG.md): next steps and ideas.
 - [Setup](docs/SETUP.md): laptop preparation, cluster installation, administration, and rebuild procedures.
 - [Inference](docs/INFERENCE.md): local/LAN model serving, GPU lifecycle, model experiments, and client setup.
+- [Monitoring](docs/MONITORING.md): Prometheus/Grafana topology, Longhorn GPU telemetry, and host boundaries.
 - `apps/`: declarative Kubernetes application manifests.
 - `scripts/`: operational scripts.
 - `configs/`: reusable configuration files.

@@ -139,3 +139,6 @@ scrapeConfigs:
     static_configs:
     - targets:
       - prometheus-kube-state-metrics.monitoring.svc.cluster.local:8080
+  # Machine-specific target is enabled in ignored local/monitoring values.
+  nvidia-gpu-exporter:
+    enabled: false

@@ -53,11 +53,11 @@ Bootstrap, lid behavior, hardware inventory, and workstation administration are 
 
 ### Longhorn metrics export
 
-- Export Longhorn host/GPU and llama.cpp serving metrics to the existing Prometheus over the LAN. Keep exporters and inference under standalone supervision initially; joining WSL to k3s is a separate decision.
-- Inspect telemetry available from the installed Windows/WSL NVIDIA stack and llama.cpp build before choosing exporters. Candidate metrics include GPU power, utilization, VRAM, temperature, prompt/generation throughput, request latency/counts, loaded model, and service readiness. Distinguish GPU watts from whole-machine electricity use, per-request speed from aggregate throughput, and inference shutdown for gaming from failures.
-- Version configuration, restrict/authenticate metrics endpoints as supported, verify scrape behavior from the cluster, and document startup, stop, rollback, and Windows sleep/reboot boundaries. Avoid high-cardinality request/prompt labels and never expose prompt content or credentials as metrics.
-- Add Grafana panels after verifying units and semantics. Use a metered power device if whole-PC consumption is needed.
-- References: [llama.cpp server metrics](https://github.com/ggml-org/llama.cpp/blob/b11552/tools/server/README.md), [Windows Exporter](https://github.com/prometheus-community/windows_exporter), and [CUDA on WSL limitations](https://docs.nvidia.com/cuda/wsl-user-guide/). Exporter compatibility with this WSL/GPU setup remains to be tested.
+- [x] Export Longhorn GPU metrics from a user systemd service in WSL, restrict the Windows listener to Bronco, scrape it with Prometheus, and publish a basic Grafana dashboard. Utilization, GPU power draw, VRAM, temperature, and clocks were verified on 2026-11-01. See [monitoring](MONITORING.md) and [setup](SETUP.md#longhorn-gpu-monitoring).
+- Export llama.cpp serving metrics to the existing Prometheus. Candidate metrics include prompt/generation throughput, request latency/counts, loaded model, and service readiness. Distinguish per-request speed from aggregate throughput and deliberate gaming shutdown from failure.
+- Consider Windows host metrics only if they answer a concrete question not covered by GPU telemetry. Use a metered power device if whole-PC consumption is needed.
+- Avoid high-cardinality request/prompt labels and never expose prompt content or credentials as metrics.
+- References: [llama.cpp server metrics](https://github.com/ggml-org/llama.cpp/blob/b11552/tools/server/README.md), [nvidia_gpu_exporter](https://github.com/utkuozdemir/nvidia_gpu_exporter), [Windows Exporter](https://github.com/prometheus-community/windows_exporter), and [CUDA on WSL limitations](https://docs.nvidia.com/cuda/wsl-user-guide/).
 
 ### Life and sports display
 

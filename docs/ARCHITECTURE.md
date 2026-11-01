@@ -1,6 +1,6 @@
 # Architecture
 
-Last updated: 2026-10-30
+Last updated: 2026-11-01
 
 The Ranch Lab is a small LAN-based homelab for running useful services and experimenting with Kubernetes, networking, and local inference. Two Linux laptops host the cluster; a Windows workstation supplies GPU inference while remaining available for gaming and everyday use.
 
@@ -53,7 +53,9 @@ Prometheus runs on Bronco as a pinned standalone Helm release, with Node Exporte
 
 Grafana runs as a separate Helm release on Yeti, with its own node-local database PVC and a provisioned Prometheus datasource. Its UI is available through localhost port-forwarding; Yeti's desktop browser reaches the cluster-internal Service directly. Administrator credentials are supplied through a private Secret. Both releases retain their PVCs on Helm uninstall, but there is no monitoring backup or node failover. Installation, access, validation, and recovery are covered in [SETUP.md](SETUP.md#prometheus-host-monitoring).
 
-Dashboard JSON is versioned alongside Grafana values and published through a repeatable API script. The node-basics dashboard is the minimal example; the Operations dashboard provides an eight-panel passive overview of host and workload state. Yeti displays the dashboard with screen blanking/dimming disabled. Automatic browser startup, end-to-end service probes, and GitOps remain planned work.
+Dashboard JSON is versioned alongside Grafana values and published through a repeatable API script. The node-basics dashboard is the minimal example; the Operations dashboard provides an eight-panel passive overview of host and workload state. Yeti displays the dashboard with screen blanking/dimming disabled.
+
+Longhorn remains outside k3s. A user systemd service in WSL exports NVIDIA GPU utilization, power, VRAM, temperature, and clocks on loopback. A Windows portproxy exposes only its metrics port on the workstation's reserved address, and a Private-profile firewall rule allows only Bronco to scrape it. Prometheus uses a machine-specific target from ignored local values; the public base keeps that job disabled. The `Ranch / Longhorn GPU` dashboard presents the data. See [MONITORING.md](MONITORING.md) for topology, host differences, and operational boundaries. Automatic browser startup, end-to-end service probes, alerts, llama.cpp telemetry, and GitOps remain planned work.
 
 ### Workstation inference
 
@@ -69,7 +71,7 @@ Inference is independent of k3s but depends on Longhorn being awake and WSL bein
 
 The cluster's recorded checks established node readiness, API readiness, secrets encryption, SSH access after laptop reboots, and operation with the lids closed. IT-Tools was validated through both LAN ingress and cluster DNS across nodes. These are historical checks, not a statement of live node health; see [the bootstrap log](../logs/2026_09_07.md) and [application validation](../logs/2026_09_19.md).
 
-Monitoring validation on 2026-10-30 covered host and Kubernetes object-state metrics, authenticated Grafana queries, persistence across application restarts, and repeatable dashboard publication. Full uninstall/reinstall and node-loss recovery remain untested; dated evidence is in [the daily log](../logs/2026_10_30.md).
+Monitoring validation on 2026-10-30 covered host and Kubernetes object-state metrics, authenticated Grafana queries, persistence across application restarts, and repeatable dashboard publication. On 2026-11-01, Longhorn's WSL GPU exporter, restricted Windows forwarding, Prometheus scrape, five required metric families, and all GPU dashboard queries were validated live. Browser-rendered GPU layout, full uninstall/reinstall, Windows restart/sleep recovery, and node-loss recovery remain untested; dated evidence is in the daily logs.
 
 Inference was validated locally and from bronco and yeti on 2026-10-30, including authentication and service stop/start. Full Windows reboot/login and sleep/resume recovery remain untested. Cluster node-failure recovery, a complete firewall audit, and package-update completeness also remain open.
 

@@ -7,6 +7,7 @@ Repeatable procedures for the current [architecture](ARCHITECTURE.md). Run only 
 - [Cluster administration](#cluster-administration)
 - [First application: IT-Tools](#first-application-it-tools)
 - [Prometheus host monitoring](#prometheus-host-monitoring)
+- [Longhorn GPU monitoring](#longhorn-gpu-monitoring)
 - [Grafana](#grafana)
 - [Local WSL inference](#local-wsl-inference)
 
@@ -340,7 +341,7 @@ scripts/monitoring/validate_scrape.sh http://127.0.0.1:9095
 kubectl top pods -n monitoring
 ```
 
-The read-only validator checks readiness, exact configured jobs, four healthy 30-second scrape targets, the two expected host labels, and CPU/memory/root-filesystem/network metrics and rates. It also checks KSM node readiness, pod inventory, IT-Tools deployment availability, and the Prometheus PVC state. It exits nonzero on missing data or HTTP/API errors and does not create a port-forward. Allow at least two successful scrapes after initial startup for rates to exist. Choose a different local port if 9095 is occupied.
+The read-only validator checks readiness, exact configured jobs, five healthy 30-second scrape targets, the two expected Linux host labels, Longhorn's GPU target, and required host/GPU metrics. It also checks KSM node readiness, pod inventory, IT-Tools deployment availability, and the Prometheus PVC state. It expects the ignored Longhorn values to be active in the current lab, exits nonzero on missing data or HTTP/API errors, and does not create a port-forward. Allow at least two successful scrapes after initial startup for rates to exist. Choose a different local port if 9095 is occupied.
 
 ConfigMap projection and reload can lag behind a Helm update. Confirm the effective configuration through `/api/v1/status/config`; Helm success alone does not establish that new scrape jobs are active. When immediate reload is needed, a bounded restart provides a deterministic update:
 
@@ -372,6 +373,121 @@ The keep annotation retains the PVC but is not a backup. Uninstall recovery has 
 [Grafana](#grafana) is managed as a separate Helm release.
 
 References: [pinned chart](https://github.com/prometheus-community/helm-charts/tree/prometheus-29.40.1/charts/prometheus), [Prometheus API](https://prometheus.io/docs/prometheus/latest/querying/api/), [storage](https://prometheus.io/docs/prometheus/latest/storage/), and [Helm resource retention](https://helm.sh/docs/howto/charts_tips_and_tricks/#tell-helm-not-to-uninstall-a-resource).
+
+## Longhorn GPU monitoring
+
+Longhorn exports NVIDIA GPU metrics from Ubuntu WSL without joining k3s. The exporter listens only on WSL loopback. Windows publishes port 9835 on its reserved LAN address, with a Private-profile TCP firewall rule limited to Bronco. Prometheus then scrapes that static target. Exact addresses belong only in ignored `local/` files.
+
+The chosen exporter is [`nvidia_gpu_exporter`](https://github.com/utkuozdemir/nvidia_gpu_exporter), which executes WSL's supported `nvidia-smi` path. NVIDIA documents limited NVML support under WSL, so the deployed path does not depend on DCGM or Linux `/dev/nvidia*` devices that are absent from this WSL environment. Revisit DCGM only if its WSL support and device prerequisites are verified on the installed driver/GPU combination.
+
+### Install the WSL user service
+
+Prerequisites are Ubuntu WSL with systemd user services, `/usr/lib/wsl/lib/nvidia-smi`, curl, tar, and an NVIDIA driver already working from WSL. Run as the ordinary WSL user from the repository root:
+
+```bash
+set -euo pipefail
+source configs/monitoring/nvidia-gpu-exporter.version
+archive="nvidia_gpu_exporter_${version}_linux_x86_64.tar.gz"
+workdir="$(mktemp -d)"
+trap 'rm -rf "$workdir"' EXIT
+curl -fL "https://github.com/utkuozdemir/nvidia_gpu_exporter/releases/download/v${version}/${archive}" \
+  -o "$workdir/$archive"
+printf '%s  %s\n' "$linux_x86_64_archive_sha256" "$workdir/$archive" | sha256sum --check -
+tar -xzf "$workdir/$archive" -C "$workdir"
+binary="$(find "$workdir" -type f -name nvidia_gpu_exporter -print -quit)"
+printf '%s  %s\n' "$linux_x86_64_binary_sha256" "$binary" | sha256sum --check -
+install -D -m 0755 "$binary" "$HOME/.local/bin/nvidia_gpu_exporter"
+install -D -m 0644 configs/monitoring/nvidia-gpu-exporter.service \
+  "$HOME/.config/systemd/user/nvidia-gpu-exporter.service"
+systemctl --user daemon-reload
+systemctl --user enable --now nvidia-gpu-exporter
+```
+
+Validate locally:
+
+```bash
+systemctl --user is-enabled nvidia-gpu-exporter
+systemctl --user is-active nvidia-gpu-exporter
+curl -fsS http://127.0.0.1:9835/metrics | grep -E \
+  '^nvidia_smi_(utilization_gpu_ratio|power_draw_watts|memory_(used|total)_bytes|temperature_gpu)'
+```
+
+The 15-second collection interval reduces `nvidia-smi` process churn while remaining faster than Prometheus's 30-second scrape. The exporter is stateless and restarts on failure. A user service does not keep WSL running; Longhorn currently relies on the same Windows logon keepalive used by inference.
+
+### Publish the WSL endpoint through Windows
+
+Create `local/monitoring/Apply-GpuExporterLan.ps1` with Longhorn's reserved Windows IPv4 address and Bronco's reserved IPv4 address. This file is ignored and must not be committed:
+
+```powershell
+& "$PSScriptRoot\..\..\scripts\monitoring\Set-WslMetricsLan.ps1" `
+  -Name gpu-exporter `
+  -ListenAddress '<LONGHORN_RESERVED_IPV4>' `
+  -AllowedClients '<BRONCO_RESERVED_IPV4>' `
+  -Port 9835
+```
+
+Run it from an elevated Windows PowerShell session. It validates the listen address, creates or replaces only its named portproxy/firewall configuration, restricts the rule to Private/TCP and the supplied client scope, and refuses to take over an unrelated listener. From Bronco, verify `curl -fsS http://longhorn.local:9835/metrics`. Do not broaden the rule to Public or all remote addresses.
+
+### Configure Prometheus and publish Grafana
+
+Create ignored `local/monitoring/longhorn-prometheus-values.yaml`:
+
+```yaml
+scrapeConfigs:
+  nvidia-gpu-exporter:
+    enabled: true
+    static_configs:
+      - targets:
+          - <LONGHORN_RESERVED_IPV4>:9835
+        labels:
+          instance: longhorn
+          node: longhorn
+```
+
+Render both values files and inspect the target before updating the release:
+
+```bash
+chart_version="$(cat apps/monitoring/prometheus/version.txt)"
+helm template prometheus prometheus-community/prometheus \
+  --namespace monitoring --version "$chart_version" \
+  -f apps/monitoring/prometheus/values.yaml \
+  -f local/monitoring/longhorn-prometheus-values.yaml
+helm upgrade --install prometheus prometheus-community/prometheus \
+  --namespace monitoring --version "$chart_version" --reset-values \
+  -f apps/monitoring/prometheus/values.yaml \
+  -f local/monitoring/longhorn-prometheus-values.yaml \
+  --wait --timeout 180s
+```
+
+With localhost Prometheus and Grafana port-forwards running, confirm the `nvidia-gpu-exporter` target is up and query the five metric families shown in the local validation above. Then publish and check the dashboard:
+
+```bash
+python3 scripts/monitoring/publish_dashboards.py \
+  apps/monitoring/grafana/dashboards/longhorn-gpu.json
+python3 scripts/monitoring/publish_dashboards.py --check \
+  apps/monitoring/grafana/dashboards/longhorn-gpu.json
+```
+
+The check verifies the saved definition and every literal query through Grafana. Inspect `Ranch / Longhorn GPU` in a browser separately; API checks do not validate rendered layout.
+
+### Stop, rollback, or remove
+
+Stopping the WSL service stops fresh GPU samples without affecting inference:
+
+```bash
+systemctl --user stop nvidia-gpu-exporter
+```
+
+To remove LAN exposure, run the same elevated Windows helper with `-Remove`. Then set the local Prometheus job to `enabled: false`, apply the two values files again, and verify that the target is gone. To remove the WSL installation:
+
+```bash
+systemctl --user disable --now nvidia-gpu-exporter
+rm "$HOME/.config/systemd/user/nvidia-gpu-exporter.service"
+systemctl --user daemon-reload
+rm "$HOME/.local/bin/nvidia_gpu_exporter"
+```
+
+Removing or stopping the exporter does not delete historical samples in Prometheus. The dashboard can remain and show no current data, or be deleted deliberately through Grafana. Windows sleep, restart, WSL shutdown, or loss of the logon keepalive interrupts collection; reboot and sleep/resume recovery have not yet been validated.
 
 ## Grafana
 
