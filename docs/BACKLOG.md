@@ -54,8 +54,10 @@ Bootstrap, lid behavior, hardware inventory, and workstation administration are 
 ### Longhorn metrics export
 
 - [x] Export Longhorn GPU metrics from a user systemd service in WSL, restrict the Windows listener to Bronco, scrape it with Prometheus, and publish a basic Grafana dashboard. Utilization, GPU power draw, VRAM, temperature, and clocks were verified on 2026-11-01. See [monitoring](MONITORING.md) and [setup](SETUP.md#longhorn-gpu-monitoring).
+- [x] Export whole-Windows CPU, memory, disk, network, OS, service, and system metrics from a checksum-pinned Windows Exporter service. Restrict its native listener to Bronco and show whole-machine CPU/memory beside the Linux nodes on the Operations homepage. See [setup](SETUP.md#longhorn-windows-host-monitoring).
 - Export llama.cpp serving metrics to the existing Prometheus. Candidate metrics include prompt/generation throughput, request latency/counts, loaded model, and service readiness. Distinguish per-request speed from aggregate throughput and deliberate gaming shutdown from failure.
-- Consider Windows host metrics only if they answer a concrete question not covered by GPU telemetry. Use a metered power device if whole-PC consumption is needed.
+- Consider migrating the NVIDIA GPU exporter from WSL to a managed native Windows service only if WSL shutdown creates a real visibility gap during gaming. Require metric-name/value parity, equivalent Bronco-only exposure, and a clean rollback before replacing the benchmarked WSL service. Windows Exporter's generic GPU collector is not a substitute for the current NVIDIA board metrics.
+- Use a metered power device if whole-PC consumption is needed; neither exporter measures it.
 - Avoid high-cardinality request/prompt labels and never expose prompt content or credentials as metrics.
 - References: [llama.cpp server metrics](https://github.com/ggml-org/llama.cpp/blob/b11552/tools/server/README.md), [nvidia_gpu_exporter](https://github.com/utkuozdemir/nvidia_gpu_exporter), [Windows Exporter](https://github.com/prometheus-community/windows_exporter), and [CUDA on WSL limitations](https://docs.nvidia.com/cuda/wsl-user-guide/).
 

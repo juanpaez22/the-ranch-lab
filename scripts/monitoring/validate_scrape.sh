@@ -15,17 +15,18 @@ api() {
 http "$endpoint/-/ready" >/dev/null
 config="$(api "$endpoint/api/v1/status/config")"
 jq -e '.data.yaml | test("(?m)^  scrape_interval: 30s$")' <<< "$config" >/dev/null || fail 'Global interval is not 30s'
-jq -e '[.data.yaml | scan("job_name: ([^\\n]+)") | .[0] | gsub("[\"\\r]"; "")] | sort == ["kube-state-metrics", "node-exporter", "nvidia-gpu-exporter", "prometheus"]' <<< "$config" >/dev/null || fail 'Unexpected configured scrape jobs'
+jq -e '[.data.yaml | scan("job_name: ([^\\n]+)") | .[0] | gsub("[\"\\r]"; "")] | sort == ["kube-state-metrics", "node-exporter", "nvidia-gpu-exporter", "prometheus", "windows-exporter"]' <<< "$config" >/dev/null || fail 'Unexpected configured scrape jobs'
 targets="$(api "$endpoint/api/v1/targets")"
 jq -e '
  .data.activeTargets as $t |
- ($t | length == 5) and
+ ($t | length == 6) and
  ($t | all(.health == "up" and .scrapeInterval == "30s")) and
  ([$t[] | select(.labels.job == "node-exporter") | .labels.node] | sort == ["bronco", "yeti"]) and
  ([$t[] | select(.labels.job == "prometheus")] | length == 1) and
  ([$t[] | select(.labels.job == "kube-state-metrics")] | length == 1) and
- ([$t[] | select(.labels.job == "nvidia-gpu-exporter" and .labels.instance == "longhorn")] | length == 1)
-' <<< "$targets" >/dev/null || fail 'Expected healthy self, KSM, two Linux hosts, and Longhorn GPU targets'
+ ([$t[] | select(.labels.job == "nvidia-gpu-exporter" and .labels.instance == "longhorn")] | length == 1) and
+ ([$t[] | select(.labels.job == "windows-exporter" and .labels.instance == "longhorn")] | length == 1)
+' <<< "$targets" >/dev/null || fail 'Expected healthy self, KSM, two Linux hosts, Longhorn GPU, and Longhorn Windows targets'
 up="$(api --get --data-urlencode 'query=up{job="node-exporter"}' "$endpoint/api/v1/query")"
 jq -e '(.data.result | length == 2) and (.data.result | all(.value[1] == "1")) and ([.data.result[].metric.node] | sort == ["bronco", "yeti"])' <<< "$up" >/dev/null || fail 'Exporter up series do not match both hosts'
 queries=(
@@ -55,6 +56,15 @@ for query in "${gpu_queries[@]}"; do
     jq -e '(.data.result | length == 1) and (.data.result[0].value[1] | tonumber | isfinite)' <<< "$result" >/dev/null || fail "Missing Longhorn GPU data: $query"
     printf 'PASS: %s\n' "$query"
 done
+windows_queries=(
+ '100 * (1 - avg(rate(windows_cpu_time_seconds_total{job="windows-exporter",instance="longhorn",mode="idle"}[5m])))'
+ '100 * (1 - windows_memory_available_bytes{job="windows-exporter",instance="longhorn"} / windows_memory_physical_total_bytes{job="windows-exporter",instance="longhorn"})'
+)
+for query in "${windows_queries[@]}"; do
+    result="$(api --get --data-urlencode "query=$query" "$endpoint/api/v1/query")"
+    jq -e '(.data.result | length == 1) and (.data.result[0].value[1] | tonumber | isfinite) and (.data.result[0].value[1] | tonumber) >= 0 and (.data.result[0].value[1] | tonumber) <= 100' <<< "$result" >/dev/null || fail "Missing or invalid Longhorn Windows data: $query"
+    printf 'PASS: %s\n' "$query"
+done
 ksm="$(api --get --data-urlencode 'query=up{job="kube-state-metrics"}' "$endpoint/api/v1/query")"
 jq -e '(.data.result | length == 1) and (.data.result[0].value[1] == "1")' <<< "$ksm" >/dev/null || fail 'KSM is not healthy'
 nodes="$(api --get --data-urlencode 'query=kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"}' "$endpoint/api/v1/query")"
@@ -67,4 +77,4 @@ for query in \
     jq -e '.data.result | length > 0' <<< "$result" >/dev/null || fail "Missing Kubernetes state data: $query"
     printf 'PASS: %s\n' "$query"
 done
-echo 'PASS: readiness, exact jobs/targets, 30s interval, Linux host, Longhorn GPU, and Kubernetes object-state metrics'
+echo 'PASS: readiness, exact jobs/targets, 30s interval, Linux host, Longhorn Windows/GPU, and Kubernetes object-state metrics'

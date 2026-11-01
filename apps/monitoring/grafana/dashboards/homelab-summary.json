@@ -51,7 +51,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "min by(node) (((up{job=\"node-exporter\"} or on(node) (0 * kube_node_info{job=\"kube-state-metrics\"})) * on(node) kube_node_status_condition{job=\"kube-state-metrics\",condition=\"Ready\",status=\"true\"}) and on() (up{job=\"kube-state-metrics\"} == 1)) or up{job=\"nvidia-gpu-exporter\",node=\"longhorn\"}",
+          "expr": "min by(node) (((up{job=\"node-exporter\"} or on(node) (0 * kube_node_info{job=\"kube-state-metrics\"})) * on(node) kube_node_status_condition{job=\"kube-state-metrics\",condition=\"Ready\",status=\"true\"}) and on() (up{job=\"kube-state-metrics\"} == 1)) or up{job=\"windows-exporter\",node=\"longhorn\"}",
           "legendFormat": "{{node}}",
           "instant": true,
           "range": false,
@@ -483,9 +483,9 @@
     },
     {
       "id": 5,
-      "title": "Longhorn / GPU",
+      "title": "Longhorn / resources",
       "type": "timeseries",
-      "description": "GPU compute utilization and VRAM allocation. This quadrant can later add inference throughput, queue, and model state.",
+      "description": "Whole-Windows CPU utilization and memory pressure. This includes Windows applications, WSL, games, and inference rather than only the WSL VM.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -504,8 +504,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * nvidia_smi_utilization_gpu_ratio{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
-          "legendFormat": "GPU",
+          "expr": "100 * (1 - avg(rate(windows_cpu_time_seconds_total{job=\"windows-exporter\",instance=\"longhorn\",mode=\"idle\"}[5m])))",
+          "legendFormat": "CPU",
           "instant": false,
           "range": true,
           "editorMode": "code"
@@ -516,8 +516,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * nvidia_smi_memory_used_bytes{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"} / nvidia_smi_memory_total_bytes{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
-          "legendFormat": "VRAM",
+          "expr": "100 * (1 - windows_memory_available_bytes{job=\"windows-exporter\",instance=\"longhorn\"} / windows_memory_physical_total_bytes{job=\"windows-exporter\",instance=\"longhorn\"})",
+          "legendFormat": "Memory",
           "instant": false,
           "range": true,
           "editorMode": "code"
@@ -572,7 +572,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "VRAM"
+              "options": "Memory"
             },
             "properties": [
               {
@@ -694,9 +694,9 @@
     },
     {
       "id": 7,
-      "title": "Linux thermals",
+      "title": "Fleet thermals",
       "type": "timeseries",
-      "description": "CPU package temperatures from the two k3s laptops. Guide lines are attention thresholds, not measured throttling limits.",
+      "description": "CPU package temperatures from the k3s laptops plus Longhorn GPU temperature. Guide lines are attention thresholds, not measured throttling limits.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -717,6 +717,18 @@
           },
           "expr": "max by(node) (node_hwmon_temp_celsius{job=\"node-exporter\"} and on(instance,chip,sensor) node_hwmon_sensor_label{job=\"node-exporter\",label=~\"Package id.*|Tctl|Tdie\"})",
           "legendFormat": "{{node}}",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "nvidia_smi_temperature_gpu{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
+          "legendFormat": "longhorn GPU",
           "instant": false,
           "range": true,
           "editorMode": "code"
@@ -804,6 +816,21 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "longhorn GPU"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#FF9830"
+                }
+              }
+            ]
           }
         ]
       },
@@ -825,9 +852,9 @@
     },
     {
       "id": 8,
-      "title": "Longhorn / power + thermals",
+      "title": "Longhorn / GPU load",
       "type": "timeseries",
-      "description": "GPU board power draw and GPU temperature. Power is not whole-workstation electricity consumption.",
+      "description": "GPU compute utilization, VRAM allocation, and GPU board power. Power is not whole-workstation electricity consumption; deeper GPU trends remain on the dedicated dashboard.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -846,8 +873,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "nvidia_smi_power_draw_watts{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
-          "legendFormat": "Power",
+          "expr": "100 * nvidia_smi_utilization_gpu_ratio{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
+          "legendFormat": "GPU",
           "instant": false,
           "range": true,
           "editorMode": "code"
@@ -858,8 +885,20 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "nvidia_smi_temperature_gpu{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
-          "legendFormat": "Temperature",
+          "expr": "100 * nvidia_smi_memory_used_bytes{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"} / nvidia_smi_memory_total_bytes{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
+          "legendFormat": "VRAM",
+          "instant": false,
+          "range": true,
+          "editorMode": "code"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "nvidia_smi_power_draw_watts{job=\"nvidia-gpu-exporter\",instance=\"longhorn\"}",
+          "legendFormat": "Power",
           "instant": false,
           "range": true,
           "editorMode": "code"
@@ -867,10 +906,11 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "watt",
+          "unit": "percent",
           "decimals": 1,
           "noValue": "NO TELEMETRY",
           "min": 0,
+          "max": 100,
           "color": {
             "mode": "fixed",
             "fixedColor": "#FF9830"
@@ -913,16 +953,34 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Temperature"
+              "options": "VRAM"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    6,
+                    4
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Power"
             },
             "properties": [
               {
                 "id": "unit",
-                "value": "celsius"
-              },
-              {
-                "id": "max",
-                "value": 100
+                "value": "watt"
               },
               {
                 "id": "custom.axisPlacement",

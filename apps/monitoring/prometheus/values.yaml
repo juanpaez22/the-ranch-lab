@@ -142,3 +142,6 @@ scrapeConfigs:
   # Machine-specific target is enabled in ignored local/monitoring values.
   nvidia-gpu-exporter:
     enabled: false
+  # Machine-specific target is enabled in ignored local/monitoring values.
+  windows-exporter:
+    enabled: false

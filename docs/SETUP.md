@@ -7,6 +7,7 @@ Repeatable procedures for the current [architecture](ARCHITECTURE.md). Run only 
 - [Cluster administration](#cluster-administration)
 - [First application: IT-Tools](#first-application-it-tools)
 - [Prometheus host monitoring](#prometheus-host-monitoring)
+- [Longhorn Windows host monitoring](#longhorn-windows-host-monitoring)
 - [Longhorn GPU monitoring](#longhorn-gpu-monitoring)
 - [Grafana](#grafana)
 - [Local WSL inference](#local-wsl-inference)
@@ -341,7 +342,7 @@ scripts/monitoring/validate_scrape.sh http://127.0.0.1:9095
 kubectl top pods -n monitoring
 ```
 
-The read-only validator checks readiness, exact configured jobs, five healthy 30-second scrape targets, the two expected Linux host labels, Longhorn's GPU target, and required host/GPU metrics. It also checks KSM node readiness, pod inventory, IT-Tools deployment availability, and the Prometheus PVC state. It expects the ignored Longhorn values to be active in the current lab, exits nonzero on missing data or HTTP/API errors, and does not create a port-forward. Allow at least two successful scrapes after initial startup for rates to exist. Choose a different local port if 9095 is occupied.
+The read-only validator checks readiness, exact configured jobs, six healthy 30-second scrape targets, the two expected Linux host labels, Longhorn's Windows/GPU targets, and required host/GPU metrics. It also checks KSM node readiness, pod inventory, IT-Tools deployment availability, and the Prometheus PVC state. It expects the ignored Longhorn values to be active in the current lab, exits nonzero on missing data or HTTP/API errors, and does not create a port-forward. Allow at least two successful scrapes after initial startup for rates to exist. Choose a different local port if 9095 is occupied.
 
 ConfigMap projection and reload can lag behind a Helm update. Confirm the effective configuration through `/api/v1/status/config`; Helm success alone does not establish that new scrape jobs are active. When immediate reload is needed, a bounded restart provides a deterministic update:
 
@@ -373,6 +374,99 @@ The keep annotation retains the PVC but is not a backup. Uninstall recovery has 
 [Grafana](#grafana) is managed as a separate Helm release.
 
 References: [pinned chart](https://github.com/prometheus-community/helm-charts/tree/prometheus-29.40.1/charts/prometheus), [Prometheus API](https://prometheus.io/docs/prometheus/latest/querying/api/), [storage](https://prometheus.io/docs/prometheus/latest/storage/), and [Helm resource retention](https://helm.sh/docs/howto/charts_tips_and_tricks/#tell-helm-not-to-uninstall-a-resource).
+
+## Longhorn Windows host monitoring
+
+Windows Exporter supplies whole-workstation CPU, memory, disk, network, OS, service, and system metrics while Longhorn remains outside k3s. It runs as an automatic native Windows service and binds only Longhorn's reserved LAN address on TCP 9182. A Private-profile firewall rule permits only Bronco. This is distinct from WSL-only resource accounting and from the separate physical GPU exporter.
+
+The repository pins the upstream MSI release and checksum in [`windows-exporter.version`](../configs/monitoring/windows-exporter.version). [`Install-WindowsExporter.ps1`](../scripts/monitoring/Install-WindowsExporter.ps1) verifies the MSI, installs a narrow collector set, creates or replaces only its named firewall rule, validates the health endpoint, and supports removal. The MSI firewall feature is intentionally not used because its default scope can be broader than the lab requires.
+
+### Download and install
+
+Prerequisites are Windows 11, an administrator account, PowerShell, the repository available through WSL, and Longhorn/Bronco reserved IPv4 addresses. From WSL, download the pinned MSI into the Windows user's temporary directory and verify it before elevation:
+
+```bash
+set -euo pipefail
+source configs/monitoring/windows-exporter.version
+msi="windows_exporter-${version}-amd64.msi"
+windows_temp="/mnt/c/Users/<WINDOWS_USER>/AppData/Local/Temp"
+curl -fL "https://github.com/prometheus-community/windows_exporter/releases/download/v${version}/${msi}" \
+  -o "$windows_temp/$msi"
+printf '%s  %s\n' "$amd64_msi_sha256" "$windows_temp/$msi" | sha256sum --check -
+```
+
+Create ignored `local/monitoring/Install-WindowsExporter.ps1` with the actual addresses:
+
+```powershell
+param([Parameter(Mandatory)][string]$MsiPath)
+
+$ErrorActionPreference = 'Stop'
+$pin = ConvertFrom-StringData (Get-Content -Raw "$PSScriptRoot\..\..\configs\monitoring\windows-exporter.version")
+& "$PSScriptRoot\..\..\scripts\monitoring\Install-WindowsExporter.ps1" `
+  -ListenAddress '<LONGHORN_RESERVED_IPV4>' `
+  -AllowedClients '<BRONCO_RESERVED_IPV4>' `
+  -Port 9182 `
+  -MsiPath $MsiPath `
+  -ExpectedVersion $pin.version `
+  -ExpectedSha256 $pin.amd64_msi_sha256
+```
+
+Run the ignored wrapper from an elevated Windows PowerShell session, passing the Windows path to the downloaded MSI. Re-running it reapplies the pinned service settings and replaces only the managed firewall rule. Windows Installer busy status is retried for up to 30 seconds.
+
+The selected collectors are `cpu`, `cpu_info`, `logical_disk`, `memory`, `net`, `os`, `physical_disk`, `service`, and `system`. They describe the Windows host, including activity caused by Windows applications and WSL, but do not attribute CPU or memory specifically to the WSL VM.
+
+### Configure Prometheus
+
+Add the native target to the same ignored `local/monitoring/longhorn-prometheus-values.yaml` used by the GPU exporter:
+
+```yaml
+scrapeConfigs:
+  windows-exporter:
+    enabled: true
+    static_configs:
+      - targets:
+          - <LONGHORN_RESERVED_IPV4>:9182
+        labels:
+          instance: longhorn
+          node: longhorn
+```
+
+Render and apply the base and local values together using the pinned Helm command under [Prometheus updates](#updates-rollback-and-removal). The public base keeps this job disabled so a checkout never embeds a machine-specific address.
+
+### Validate
+
+In an elevated Windows PowerShell session:
+
+```powershell
+Get-Service windows_exporter
+Get-NetTCPConnection -State Listen -LocalPort 9182
+Get-NetFirewallRule -Name 'RanchWindowsMetrics-windows-exporter-9182'
+Invoke-WebRequest -UseBasicParsing http://<LONGHORN_RESERVED_IPV4>:9182/health
+```
+
+The service should be Running/Automatic, exactly one listener should use Longhorn's specific address, and the rule should be enabled Inbound/Allow on Private/TCP with Bronco as its remote scope. From Bronco, retrieve `/metrics`. In Prometheus, require the `windows-exporter` target to be up and check:
+
+```promql
+100 * (1 - avg(rate(windows_cpu_time_seconds_total{job="windows-exporter",instance="longhorn",mode="idle"}[5m])))
+100 * (1 - windows_memory_available_bytes{job="windows-exporter",instance="longhorn"} / windows_memory_physical_total_bytes{job="windows-exporter",instance="longhorn"})
+```
+
+Allow at least two 30-second scrapes before the CPU rate returns data. Run `validate_scrape.sh`, publish `homelab-summary.json`, and run the dashboard publisher with `--check`. These checks validate data and authored definitions, not browser rendering.
+
+### Update or remove
+
+For an update, review upstream release notes, change the version and official checksum together, download the new MSI, rerun the ignored wrapper, and repeat every validation. Do not use an unpinned `latest` URL.
+
+To remove Windows Exporter, run the versioned script from an elevated PowerShell session with the same listen address and port plus `-Remove`; no MSI path is required:
+
+```powershell
+& '<REPOSITORY_WINDOWS_PATH>\scripts\monitoring\Install-WindowsExporter.ps1' `
+  -ListenAddress '<LONGHORN_RESERVED_IPV4>' -Port 9182 -Remove
+```
+
+Then disable or remove only the `windows-exporter` block from the ignored local Prometheus values, reapply Helm, and verify the target is gone. Historical samples remain until Prometheus retention removes them. Removing the exporter does not affect inference, the WSL GPU exporter, or the cluster. Native service recovery after a full Windows reboot has not yet been validated.
+
+Reference: [Windows Exporter installation and collectors](https://github.com/prometheus-community/windows_exporter).
 
 ## Longhorn GPU monitoring
 
@@ -558,7 +652,7 @@ Inspect the Grafana PVC's keep annotation before `helm uninstall grafana -n moni
 
 Dashboard JSON in [apps/monitoring/grafana/dashboards/](../apps/monitoring/grafana/dashboards/) is the source of truth. [node-basics.json](../apps/monitoring/grafana/dashboards/node-basics.json) establishes a minimal example: two stat panels show uptime and memory used for each node, using datasource UID `prometheus`. Memory used means `100 * (1 - MemAvailable / MemTotal)`, including reclaimable memory correctly. Uptime uses exporter host time minus boot time. Missing data is not converted to zero.
 
-[homelab-summary.json](../apps/monitoring/grafana/dashboards/homelab-summary.json) defines `Ranch / Operations`, an eight-panel always-on homepage. Its top row shows machine telemetry/readiness and Kubernetes health. The middle row gives Bronco, Yeti, and Longhorn equal-width three-hour resource quadrants. The bottom row covers Linux storage/thermals and Longhorn GPU power/temperature. Bronco is cyan, Yeti violet, and Longhorn orange. The layout intentionally reserves Longhorn's quadrant for later inference metrics, has no variable controls, and refreshes every 30 seconds.
+[homelab-summary.json](../apps/monitoring/grafana/dashboards/homelab-summary.json) defines `Ranch / Operations`, an eight-panel always-on homepage. Its top row shows machine telemetry/readiness and Kubernetes health. The middle row gives Bronco, Yeti, and Longhorn equal-width three-hour CPU/memory quadrants; Longhorn uses whole-Windows metrics. The bottom row covers Linux storage, fleet thermals, and Longhorn GPU utilization/VRAM/power. Bronco is cyan, Yeti violet, and Longhorn orange. The layout leaves room for later inference metrics, has no variable controls, and refreshes every 30 seconds.
 
 Open `http://127.0.0.1:3000/d/ranch-homelab-summary/ranch-operations?kiosk&theme=dark` through the existing port-forward for a dark kiosk view. The 24-column, 17-row layout targets a landscape laptop display. The earlier layout was confirmed on Yeti; the machine-centric revision has API/query validation but still needs a rendered visual check. Missing metrics are not replaced with healthy zeroes: Bronco/Yeti require live host and KSM state, while Longhorn reflects its external GPU telemetry path. Replica availability does not establish end-to-end HTTP health. Temperature guide lines at 75/90 °C are attention thresholds, not measured hardware throttling limits.
 
