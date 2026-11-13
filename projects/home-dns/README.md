@@ -2,6 +2,14 @@
 
 Status: proposal for review, not an adopted design or deployed service.
 
+Goal: choose and pilot a maintainable household DNS and application naming design.
+
+Next decision: confirm the router's DNS handoff behavior and approve or reject a one-client Pi-hole pilot.
+
+Promotion targets: deployment files in `apps/home-dns/`; adopted architecture and procedures in `docs/ARCHITECTURE.md` and `docs/SETUP.md`.
+
+Private inputs: exact LAN addresses, router exports, and pilot overrides belong in ignored `local/home-dns/`.
+
 ## Recommendation
 
 Run Pi-hole as a standalone, DNS-only container on `bronco`, outside k3s. Keep the RAX45 as the DHCP server, use `home.arpa` for host names and `apps.home.arpa` for application names, and add explicit Traefik Ingress rules for web applications.

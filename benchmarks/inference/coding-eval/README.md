@@ -10,8 +10,8 @@ Save a llama.cpp `/v1/chat/completions` response under the ignored `results/`
 directory, then run:
 
 ```bash
-python3 benchmarks/coding-eval/evaluate.py \
-  benchmarks/coding-eval/results/<model>.json
+python3 benchmarks/inference/coding-eval/evaluate.py \
+  benchmarks/inference/coding-eval/results/<model>.json
 ```
 
 The evaluator executes generated Python in an isolated interpreter process

@@ -54,7 +54,7 @@ dates and used artifacts from different publishers, so the result is a practical
 artifact comparison rather than a controlled quantizer-quality study.
 
 The versioned result summary and CSV are under
-[`20261112-qwen3.8-27b-iq4-xs`](../benchmarks/llama-context-sweep/results/20261112-qwen3.8-27b-iq4-xs/summary.md).
+[`20261112-qwen3.8-27b-iq4-xs`](../context-sweep/results/20261112-qwen3.8-27b-iq4-xs/summary.md).
 Full responses and server logs remain ignored local artifacts.
 
 ## Operational outcome
@@ -103,7 +103,7 @@ These are single greedy generations. The clean sweep is encouraging evidence
 for trying Qwen as a daily driver, but repeated coding tasks and real multi-turn
 OpenCode sessions are still needed before treating its reliability as settled.
 The versioned results are in the
-[2026-11-12 simulator summary](../benchmarks/ranch-sim-eval/summary-20261112.md).
+[2026-11-12 simulator summary](../ranch-sim-eval/summary-20261112.md).
 
 ## Q3_K_XL 64K follow-up
 
@@ -126,4 +126,16 @@ observed with IQ4_XS.
 The downloaded file's SHA-256 is
 `7b20f0679da6f5c6ec7971e241630f44fe1e123e5c99bfea90c433268b355723`,
 matching the publisher metadata. The versioned result summary and CSV are under
-[`20261112-qwen3.8-27b-q3-k-xl`](../benchmarks/llama-context-sweep/results/20261112-qwen3.8-27b-q3-k-xl/summary.md).
+[`20261112-qwen3.8-27b-q3-k-xl`](../context-sweep/results/20261112-qwen3.8-27b-q3-k-xl/summary.md).
+
+## Gemma control after the OpenCode upgrade
+
+Gemma was rerun on 2026-11-13 after OpenCode was upgraded from 2.0.26 to 2.2.7. The ranch-simulator harness calls the authenticated llama.cpp API directly, so it does not include OpenCode's system prompt, Code Mode instructions, tools, or compaction. This is therefore a repeatability control, not a test of the repaired OpenCode tool-routing path.
+
+| Profile | Original score | Rerun score | Rerun generation tok/s | Rerun failure |
+| --- | ---: | ---: | ---: | --- |
+| 8K | 15/16 | 15/16 | 82.50 | Detached simulation history |
+| 32K | 16/16 | 16/16 | 74.15 | None |
+| 60K | 15/16 | 15/16 | 65.52 | Insufficient-coin validation |
+
+All three responses stopped normally with complete code and no reasoning-only output. Prompt and completion token counts matched the original runs exactly, as did the score and failed check at each profile. No inference-service, CUDA, or WSL GPU error was logged during the rerun. Gemma was explicitly unloaded afterward, returning GPU allocation near idle. The unchanged result supports the diagnosis that the OpenCode upgrade repaired the agent harness rather than changing Gemma's underlying generation behavior.

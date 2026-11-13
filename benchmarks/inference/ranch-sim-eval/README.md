@@ -17,13 +17,13 @@ agent session.
 Build ignored prompt artifacts:
 
 ```bash
-python3 benchmarks/ranch-sim-eval/build_prompts.py
+python3 benchmarks/inference/ranch-sim-eval/build_prompts.py
 ```
 
 Run one model/profile through the authenticated local router:
 
 ```bash
-python3 benchmarks/ranch-sim-eval/run.py \
+python3 benchmarks/inference/ranch-sim-eval/run.py \
   --model gpt-oss-20b-mxfp4 \
   --profile 32k
 ```
@@ -37,7 +37,7 @@ After an initial result, run one agent-like repair turn using only the failed
 test names and errors:
 
 ```bash
-python3 benchmarks/ranch-sim-eval/repair.py \
+python3 benchmarks/inference/ranch-sim-eval/repair.py \
   --model gpt-oss-20b-mxfp4 \
   --profile 60k
 ```

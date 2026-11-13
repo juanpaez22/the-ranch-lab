@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run from the repository root: sudo bash scripts/install_k3s_server_bronco.sh
+# Run from the repository root: sudo bash scripts/k3s/install_server_bronco.sh
 set -euo pipefail
 
 # Refuse to overwrite an existing installation's configuration.

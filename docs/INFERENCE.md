@@ -101,7 +101,7 @@ OpenCode assembles instructions, conversation, files, and tool results into each
 
 ### OpenCode
 
-The versioned [provider configuration](../configs/opencode/opencode.jsonc) contains ten model entries. Human-readable names follow `[LOCAL] Model Quant Context (optional notes)`, while stable preset IDs remain lowercase and script-friendly. The configuration reads authentication from `~/.config/llama.cpp/api.key` rather than embedding a credential.
+The versioned [provider configuration](../apps/inference/config/opencode.jsonc) contains ten model entries. Human-readable names follow `[LOCAL] Model Quant Context (optional notes)`, while stable preset IDs remain lowercase and script-friendly. The configuration reads authentication from `~/.config/llama.cpp/api.key` rather than embedding a credential.
 
 OpenCode does not select these presets through a top-level `--model` option. Start OpenCode, enter `/models`, and choose the desired `[LOCAL]` entry. The current session switches to that entry without changing the configured default.
 
@@ -128,7 +128,7 @@ The mDNS name `longhorn.local` works from bronco and yeti, but resolution depend
 ### Adding or changing a preset
 
 1. Download the model once with `llama download -hf <repo>:<quant>`. Never run concurrent downloaders for the same model/cache.
-2. Add a section to [models.ini](../configs/inference/models.ini). A new preset ID lets you compare settings while preserving a known configuration.
+2. Add a section to [models.ini](../apps/inference/config/models.ini). A new preset ID lets you compare settings while preserving a known configuration.
 3. Install the preset file and call the authenticated `GET /models?reload=1` endpoint. Changed running presets are unloaded, so refresh between tasks.
 4. Add a matching OpenCode model entry with appropriate capabilities and context/input/output limits, then install the client config.
 5. Test an inference request, inspect the allocated context, and exercise the client's tool loop.
@@ -143,7 +143,7 @@ ctx-size = 32768
 
 Its OpenCode entry must declare a 32,768-token context budget. Model-specific settings inherit from `[*]`; router command-line arguments take precedence over presets. Keep settings that vary by model in the preset file.
 
-The original [context benchmark](INFERENCE_BENCHMARK_2026_10_11.md) records throughput across context allocations. The [GPT-OSS comparison](INFERENCE_BENCHMARK_2026_10_31.md) adds fresh 4K/128K measurements and coding evaluations against the Gemma default. The [Qwen IQ4_XS follow-up](INFERENCE_BENCHMARK_2026_11_12.md) compares the smaller Unsloth artifact with the earlier Q4_K_M result at 16K, 32K, and 64K. None is a general quality ranking or, except where explicitly stated in the simulator report, a filled-context benchmark. To repeat the throughput test, stop the router, run [the benchmark harness](../benchmarks/llama-context-sweep/README.md), and start the router again afterward.
+The [inference benchmark index](../benchmarks/inference/README.md) links the dated context, model, and coding reports. These are controlled measurements, not general quality rankings or, except where explicitly stated in the simulator report, filled-context benchmarks. To repeat the throughput test, stop the router, run [the context-sweep harness](../benchmarks/inference/context-sweep/README.md), and start the router again afterward.
 
 ## Installation
 
@@ -153,10 +153,10 @@ Run WSL commands from the repository root unless stated otherwise. Prerequisites
 
 | Source | Installed location |
 | --- | --- |
-| [inference.service](../configs/inference/inference.service) | `~/.config/systemd/user/inference.service` |
-| [models.ini](../configs/inference/models.ini) | `~/.config/llama.cpp/models.ini` |
-| [opencode.jsonc](../configs/opencode/opencode.jsonc) | `~/.config/opencode/opencode.jsonc` |
-| Windows scripts in [scripts/inference/](../scripts/inference/) | `%USERPROFILE%\.config\RanchInference` |
+| [inference.service](../apps/inference/systemd/inference.service) | `~/.config/systemd/user/inference.service` |
+| [models.ini](../apps/inference/config/models.ini) | `~/.config/llama.cpp/models.ini` |
+| [opencode.jsonc](../apps/inference/config/opencode.jsonc) | `~/.config/opencode/opencode.jsonc` |
+| Windows scripts in [apps/inference/scripts/](../apps/inference/scripts/) | `%USERPROFILE%\.config\RanchInference` |
 
 These are installed copies. Editing the repository does not change the running configuration; install the changed files and reload or restart the relevant component. Keep API keys, concrete LAN addresses, backups, and diagnostic output outside Git. Public examples use hostnames or prompts for private values.
 
@@ -240,9 +240,9 @@ Before replacing an existing installation, stop its inference process and back u
 
 ```bash
 install -d -m 0700 ~/.config/llama.cpp ~/.config/systemd/user ~/.config/opencode
-install -m 0600 configs/inference/models.ini ~/.config/llama.cpp/models.ini
-install -m 0644 configs/inference/inference.service ~/.config/systemd/user/inference.service
-install -m 0600 configs/opencode/opencode.jsonc ~/.config/opencode/opencode.jsonc
+install -m 0600 apps/inference/config/models.ini ~/.config/llama.cpp/models.ini
+install -m 0644 apps/inference/systemd/inference.service ~/.config/systemd/user/inference.service
+install -m 0600 apps/inference/config/opencode.jsonc ~/.config/opencode/opencode.jsonc
 if [[ ! -e ~/.config/llama.cpp/api.key ]]; then
   (umask 077; openssl rand -hex -out ~/.config/llama.cpp/api.key 32)
 fi
@@ -257,16 +257,16 @@ Linger starts the user service manager when WSL boots. The router starts without
 
 The scripts have separate responsibilities:
 
-- [Set-InferenceLan.ps1](../scripts/inference/Set-InferenceLan.ps1) creates or removes the listener and `RanchInference-19331` firewall rule. It accepts `-ListenAddress`, optional `-Port` (default 19331), and `-AllowedClients` as IPv4 addresses, CIDRs, or `LocalSubnet`.
-- [Install-InferenceKeepalive.ps1](../scripts/inference/Install-InferenceKeepalive.ps1) registers or updates the `RanchInference-WSL` logon task, then starts it. Its `-Distribution` argument defaults to `Ubuntu`.
-- [Keep-InferenceWsl.ps1](../scripts/inference/Keep-InferenceWsl.ps1) is the task action. It holds a foreground `sleep infinity` process in the chosen distribution without starting a manually stopped inference service.
+- [Set-InferenceLan.ps1](../apps/inference/scripts/Set-InferenceLan.ps1) creates or removes the listener and `RanchInference-19331` firewall rule. It accepts `-ListenAddress`, optional `-Port` (default 19331), and `-AllowedClients` as IPv4 addresses, CIDRs, or `LocalSubnet`.
+- [Install-InferenceKeepalive.ps1](../apps/inference/scripts/Install-InferenceKeepalive.ps1) registers or updates the `RanchInference-WSL` logon task, then starts it. Its `-Distribution` argument defaults to `Ubuntu`.
+- [Keep-InferenceWsl.ps1](../apps/inference/scripts/Keep-InferenceWsl.ps1) is the task action. It holds a foreground `sleep infinity` process in the chosen distribution without starting a manually stopped inference service.
 
 From Windows PowerShell at the repository root, copy the scripts to their installed location:
 
 ```powershell
 $stateDir = Join-Path $env:USERPROFILE '.config\RanchInference'
 New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
-Copy-Item scripts/inference/*.ps1 $stateDir
+Copy-Item apps/inference/scripts/*.ps1 $stateDir
 ```
 
 Use this normal user directory rather than AppData, which packaged applications can redirect to a private cache that Task Scheduler does not see.
@@ -367,4 +367,4 @@ When changing ports, migrate the service, clients, Windows listener, and firewal
 - [llama.cpp server documentation for b11552](https://github.com/ggml-org/llama.cpp/blob/b11552/tools/server/README.md), covering router presets, management APIs, and idle sleep.
 - [Microsoft WSL networking](https://learn.microsoft.com/en-us/windows/wsl/networking) and [systemd lifecycle](https://devblogs.microsoft.com/commandline/systemd-support-is-now-available-in-wsl/).
 - [OpenCode configuration variables](https://opencode.ai/v2/docs/config#files) and [custom providers](https://opencode.ai/v2/docs/providers#custom).
-- [Original workstation benchmark](INFERENCE_BENCHMARK_2026_10_11.md), [GPT-OSS comparison](INFERENCE_BENCHMARK_2026_10_31.md), and [benchmark harness](../benchmarks/llama-context-sweep/README.md).
+- [Inference benchmark reports and harnesses](../benchmarks/inference/README.md).

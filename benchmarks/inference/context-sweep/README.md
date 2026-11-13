@@ -9,14 +9,14 @@ The default matrix uses one server slot, Flash Attention, Q4_0 K/V cache, automa
 The script uses Bash, curl, jq, Python 3, `sha256sum`, `nvidia-smi`, and a CUDA-enabled llama.cpp installation. It installs nothing. Stop other GPU inference processes first. From the repository root:
 
 ```bash
-benchmarks/llama-context-sweep/run.sh --download
+benchmarks/inference/context-sweep/run.sh --download
 ```
 
 Resume an interrupted result directory without repeating points that already have the requested number of successful runs:
 
 ```bash
-benchmarks/llama-context-sweep/run.sh \
-  --resume benchmarks/llama-context-sweep/results/20261011-longhorn
+benchmarks/inference/context-sweep/run.sh \
+  --resume benchmarks/inference/context-sweep/results/20261011-longhorn
 ```
 
 Include the original nondefault `--repeats` and `--output-tokens` values when resuming. The script checks runtime and input compatibility plus the recorded slot count, Flash Attention, KV cache, fitting margin, prompt caching, and thinking settings before adding samples. Context sizes can be added to the same result set.
@@ -24,7 +24,7 @@ Include the original nondefault `--repeats` and `--output-tokens` values when re
 The script invokes its own model downloads sequentially. Ensure no other process is downloading the same model into the cache. To run a smaller smoke test or change the repetition count for a new result set:
 
 ```bash
-benchmarks/llama-context-sweep/run.sh \
+benchmarks/inference/context-sweep/run.sh \
   --model gemma-4-e4b \
   --contexts 4096,16384 \
   --repeats 1 \

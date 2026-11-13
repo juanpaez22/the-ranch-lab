@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run from the repository root: sudo bash scripts/install_k3s_agent_yeti.sh
+# Run from the repository root: sudo bash scripts/k3s/install_agent_yeti.sh
 set -euo pipefail
 umask 077
 

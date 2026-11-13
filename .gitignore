@@ -30,11 +30,11 @@ __pycache__/
 *.pyc
 .venv/
 node_modules/
-benchmarks/llama-context-sweep/results/*/logs/
-benchmarks/llama-context-sweep/results/*/responses/
-benchmarks/coding-eval/results/
-benchmarks/ranch-sim-eval/prompts/
-benchmarks/ranch-sim-eval/results/
+benchmarks/inference/context-sweep/results/*/logs/
+benchmarks/inference/context-sweep/results/*/responses/
+benchmarks/inference/coding-eval/results/
+benchmarks/inference/ranch-sim-eval/prompts/
+benchmarks/inference/ranch-sim-eval/results/
 
 # Editor and OS state
 .vscode/

@@ -5,7 +5,7 @@ Ideas are candidates, not commitments. Move items forward when there is a useful
 ## Next steps
 
 - [x] Deploy a disposable application and verify cross-node pod networking, cluster DNS, and LAN ingress. On 2026-09-19, traffic entered through Traefik on bronco and reached IT-Tools on yeti; both the external ingress request and an in-cluster service-DNS request returned HTTP 200.
-- [ ] Review the [home DNS proposal](DNS_PROPOSAL.md). It recommends a one-client, DNS-only Pi-hole pilot as a standalone container on Bronco, with DHCP left on the RAX45, names under `home.arpa`, and explicit Ingress rules for web applications. This is not yet an adopted deployment decision. Resolve the router's DNS handoff, Bronco port 53, Docker/k3s coexistence, outage behavior, and rollback before implementation or household rollout.
+- [ ] Review the [home DNS proposal](../projects/home-dns/README.md). It recommends a one-client, DNS-only Pi-hole pilot as a standalone container on Bronco, with DHCP left on the RAX45, names under `home.arpa`, and explicit Ingress rules for web applications. This is not yet an adopted deployment decision. Resolve the router's DNS handoff, Bronco port 53, Docker/k3s coexistence, outage behavior, and rollback before implementation or household rollout.
 - [ ] Test service placement, node downtime, and recovery.
 - [ ] Review live firewall rules and scope cluster access to lab peers.
 - [ ] Recheck network stability if the brief SSH/cluster interruption recurs; its cause remains unknown.

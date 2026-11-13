@@ -122,7 +122,7 @@ Verification is separate from installation so each step is visible. A failure af
 From the repository or staged bundle root:
 
 ```bash
-sudo bash scripts/install_k3s_server_bronco.sh
+sudo bash scripts/k3s/install_server_bronco.sh
 sudo k3s kubectl wait --for=condition=Ready node/bronco --timeout=180s
 sudo k3s secrets-encrypt status
 ```
@@ -140,7 +140,7 @@ Copy the full token privately. Do not put it in chat, Git, screenshots, shell ar
 From the repository or staged bundle root:
 
 ```bash
-sudo bash scripts/install_k3s_agent_yeti.sh
+sudo bash scripts/k3s/install_agent_yeti.sh
 ```
 
 Enter bronco's reserved IPv4 address, then paste the token at the hidden prompt. The token is stored only in a root-readable file outside the repository, referenced by the agent configuration. The script does not echo it or put it on a command line.
@@ -343,7 +343,7 @@ kubectl -n monitoring port-forward --address=127.0.0.1 svc/prometheus-server 909
 Open `http://127.0.0.1:9095/` and run in a second terminal:
 
 ```bash
-scripts/monitoring/validate_scrape.sh http://127.0.0.1:9095
+apps/monitoring/scripts/validate_scrape.sh http://127.0.0.1:9095
 kubectl top pods -n monitoring
 ```
 
@@ -384,7 +384,7 @@ References: [pinned chart](https://github.com/prometheus-community/helm-charts/t
 
 Windows Exporter supplies whole-workstation CPU, memory, disk, network, OS, service, and system metrics while Longhorn remains outside k3s. It runs as an automatic native Windows service and binds only Longhorn's reserved LAN address on TCP 9182. A Private-profile firewall rule permits only Bronco. This is distinct from WSL-only resource accounting and from the separate physical GPU exporter.
 
-The repository pins the upstream MSI release and checksum in [`windows-exporter.version`](../configs/monitoring/windows-exporter.version). [`Install-WindowsExporter.ps1`](../scripts/monitoring/Install-WindowsExporter.ps1) verifies the MSI, installs a narrow collector set, creates or replaces only its named firewall rule, validates the health endpoint, and supports removal. The MSI firewall feature is intentionally not used because its default scope can be broader than the lab requires.
+The repository pins the upstream MSI release and checksum in [`windows-exporter.version`](../apps/monitoring/exporters/windows-exporter.version). [`Install-WindowsExporter.ps1`](../apps/monitoring/scripts/Install-WindowsExporter.ps1) verifies the MSI, installs a narrow collector set, creates or replaces only its named firewall rule, validates the health endpoint, and supports removal. The MSI firewall feature is intentionally not used because its default scope can be broader than the lab requires.
 
 ### Download and install
 
@@ -392,7 +392,7 @@ Prerequisites are Windows 11, an administrator account, PowerShell, the reposito
 
 ```bash
 set -euo pipefail
-source configs/monitoring/windows-exporter.version
+source apps/monitoring/exporters/windows-exporter.version
 msi="windows_exporter-${version}-amd64.msi"
 windows_temp="/mnt/c/Users/<WINDOWS_USER>/AppData/Local/Temp"
 curl -fL "https://github.com/prometheus-community/windows_exporter/releases/download/v${version}/${msi}" \
@@ -485,7 +485,7 @@ Prerequisites are Ubuntu WSL with systemd user services, `/usr/lib/wsl/lib/nvidi
 
 ```bash
 set -euo pipefail
-source configs/monitoring/nvidia-gpu-exporter.version
+source apps/monitoring/exporters/nvidia-gpu-exporter.version
 archive="nvidia_gpu_exporter_${version}_linux_x86_64.tar.gz"
 workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
@@ -496,7 +496,7 @@ tar -xzf "$workdir/$archive" -C "$workdir"
 binary="$(find "$workdir" -type f -name nvidia_gpu_exporter -print -quit)"
 printf '%s  %s\n' "$linux_x86_64_binary_sha256" "$binary" | sha256sum --check -
 install -D -m 0755 "$binary" "$HOME/.local/bin/nvidia_gpu_exporter"
-install -D -m 0644 configs/monitoring/nvidia-gpu-exporter.service \
+install -D -m 0644 apps/monitoring/exporters/nvidia-gpu-exporter.service \
   "$HOME/.config/systemd/user/nvidia-gpu-exporter.service"
 systemctl --user daemon-reload
 systemctl --user enable --now nvidia-gpu-exporter
@@ -561,9 +561,9 @@ helm upgrade --install prometheus prometheus-community/prometheus \
 With localhost Prometheus and Grafana port-forwards running, confirm the `nvidia-gpu-exporter` target is up and query the five metric families shown in the local validation above. Then publish and check the dashboard:
 
 ```bash
-python3 scripts/monitoring/publish_dashboards.py \
+python3 apps/monitoring/scripts/publish_dashboards.py \
   apps/monitoring/grafana/dashboards/longhorn-gpu.json
-python3 scripts/monitoring/publish_dashboards.py --check \
+python3 apps/monitoring/scripts/publish_dashboards.py --check \
   apps/monitoring/grafana/dashboards/longhorn-gpu.json
 ```
 
@@ -642,7 +642,7 @@ kubectl -n monitoring port-forward --address=127.0.0.1 svc/grafana 3000:80
 Open `http://127.0.0.1:3000/`, log in as `admin`, and read the password from `local/grafana/admin-password` in a private terminal or editor. Do not paste it into shared logs. Choose another local port if needed. From another terminal:
 
 ```bash
-scripts/monitoring/validate_grafana.sh http://127.0.0.1:3000
+apps/monitoring/scripts/validate_grafana.sh http://127.0.0.1:3000
 ```
 
 The validator checks database health, anonymous API rejection, administrator authentication, the provisioned default datasource, and an authenticated query through Grafana returning healthy exporters for both hosts. It accepts an optional second argument naming another private password file. It uses bounded requests and a mode-0600 temporary curl configuration, removes it on exit, and never places the password in command arguments. It does not create a port-forward or modify Grafana. Run the separate Prometheus validator as well when changing the monitoring stack.
@@ -675,8 +675,8 @@ Verify with `gsettings get` for the same schema/key pairs. These settings persis
 With the Grafana localhost port-forward running, publish and check:
 
 ```bash
-python3 scripts/monitoring/publish_dashboards.py
-python3 scripts/monitoring/publish_dashboards.py --check
+python3 apps/monitoring/scripts/publish_dashboards.py
+python3 apps/monitoring/scripts/publish_dashboards.py --check
 ```
 
 The publisher requires Python 3 and uses only its standard library and the existing private admin password file. Optional `--endpoint`, `--password-file`, and explicit JSON file paths select a tunnel, credential location, or subset. It uses bounded requests and keeps credentials out of process arguments. It does not start a port-forward. The current publisher targets the installed Grafana 12.3 legacy dashboard API (`POST /api/dashboards/db`); review API compatibility when upgrading Grafana.

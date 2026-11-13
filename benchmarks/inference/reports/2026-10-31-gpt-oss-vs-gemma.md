@@ -48,11 +48,11 @@ larger budget and low reasoning effort so GPT-OSS reached a final answer.
 
 The source rows and generated summaries are stored under:
 
-- [`20261031-gpt-oss-20b`](../benchmarks/llama-context-sweep/results/20261031-gpt-oss-20b/summary.md)
-- [`20261031-gemma-4-26b-a4b`](../benchmarks/llama-context-sweep/results/20261031-gemma-4-26b-a4b/summary.md)
+- [`20261031-gpt-oss-20b`](../context-sweep/results/20261031-gpt-oss-20b/summary.md)
+- [`20261031-gemma-4-26b-a4b`](../context-sweep/results/20261031-gemma-4-26b-a4b/summary.md)
 
 Full responses and server logs remain ignored local artifacts. The coding prompt
-and evaluator are versioned under [`benchmarks/coding-eval`](../benchmarks/coding-eval/README.md).
+and evaluator are versioned under [`benchmarks/inference/coding-eval`](../coding-eval/README.md).
 
 ## Installation and validation
 
@@ -132,7 +132,7 @@ early requirements are dropped, and GPT-OSS can spend the entire output budget
 reasoning without completing the requested repair. Gemma was materially more
 reliable on this workload.
 
-The versioned [benchmark definition](../benchmarks/ranch-sim-eval/README.md)
-and [result summary](../benchmarks/ranch-sim-eval/summary-20261031.md) preserve
+The versioned [benchmark definition](../ranch-sim-eval/README.md)
+and [result summary](../ranch-sim-eval/summary-20261031.md) preserve
 the task, controls, and measurements. Generated prompts and full model
 responses remain ignored local artifacts.

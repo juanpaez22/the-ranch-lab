@@ -22,7 +22,7 @@ Values are median generation rates across successful measured requests. Each req
 
 From the smallest to largest supported slot, E4B declined 0.1%, 12B declined 0.4%, 26B-A4B declined 30.8%, 31B declined 55.6%, and Qwen3.8-27B declined 47.7%. The 26B-A4B result at 256K was approximately as fast as 12B across its full range.
 
-The detailed [summary](../benchmarks/llama-context-sweep/results/20261011-longhorn/summary.md) includes run counts, ranges, prompt-processing rates, and pre-request GPU memory observations. The [CSV](../benchmarks/llama-context-sweep/results/20261011-longhorn/summary.csv) is suitable for further analysis.
+The detailed [summary](../context-sweep/results/20261011-longhorn/summary.md) includes run counts, ranges, prompt-processing rates, and pre-request GPU memory observations. The [CSV](../context-sweep/results/20261011-longhorn/summary.csv) is suitable for further analysis.
 
 ## Method
 
@@ -51,10 +51,10 @@ For this workstation, E4B had the highest generation throughput, 12B's generatio
 
 ## Repeat the benchmark
 
-The [benchmark README](../benchmarks/llama-context-sweep/README.md) documents prerequisites, execution, resume behavior, and output. From the repository root:
+The [benchmark README](../context-sweep/README.md) documents prerequisites, execution, resume behavior, and output. From the repository root:
 
 ```bash
-benchmarks/llama-context-sweep/run.sh --download
+benchmarks/inference/context-sweep/run.sh --download
 ```
 
-Add another model to [`models.tsv`](../benchmarks/llama-context-sweep/models.tsv) with its stable ID, label, llama.cpp Hugging Face reference, quantization, and published native context ceiling. The script downloads selected models sequentially and refuses to begin while its benchmark port is occupied.
+Add another model to [`models.tsv`](../context-sweep/models.tsv) with its stable ID, label, llama.cpp Hugging Face reference, quantization, and published native context ceiling. The script downloads selected models sequentially and refuses to begin while its benchmark port is occupied.

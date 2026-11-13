@@ -3,7 +3,7 @@
 set -euo pipefail
 endpoint="${1:-http://127.0.0.1:3000}"
 endpoint="${endpoint%/}"
-repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)"
 password_file="${2:-$repo_root/local/grafana/admin-password}"
 for tool in curl jq; do command -v "$tool" >/dev/null || { echo "Missing $tool" >&2; exit 1; }; done
 fail() { echo "FAIL: $*" >&2; exit 1; }

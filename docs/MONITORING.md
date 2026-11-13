@@ -16,7 +16,7 @@ The monitoring stack combines cluster-native telemetry from the two k3s laptops 
 | Windows portproxy and firewall | Longhorn Windows | Publishes only the GPU exporter port on Longhorn's reserved LAN address. The Private-profile TCP rule permits only Bronco. |
 | Grafana | Yeti, in k3s | Uses Prometheus as its provisioned datasource and stores its database on a node-local PVC. |
 
-The pinned Helm and exporter versions live under [`apps/monitoring`](../apps/monitoring) and [`configs/monitoring`](../configs/monitoring). Dashboard JSON is versioned under [`apps/monitoring/grafana/dashboards`](../apps/monitoring/grafana/dashboards) and published with [`publish_dashboards.py`](../scripts/monitoring/publish_dashboards.py).
+The pinned Helm and exporter versions, service definitions, dashboards, and app-specific automation live under [`apps/monitoring`](../apps/monitoring). Dashboard JSON is versioned under [`apps/monitoring/grafana/dashboards`](../apps/monitoring/grafana/dashboards) and published with [`publish_dashboards.py`](../apps/monitoring/scripts/publish_dashboards.py).
 
 ## K3s nodes compared with Longhorn
 
@@ -62,7 +62,7 @@ systemctl --user status nvidia-gpu-exporter
 curl -fsS http://127.0.0.1:9835/metrics | grep '^nvidia_smi_'
 kubectl -n monitoring port-forward --address=127.0.0.1 svc/prometheus-server 9095:80
 kubectl -n monitoring port-forward --address=127.0.0.1 svc/grafana 3000:80
-python3 scripts/monitoring/publish_dashboards.py --check
+python3 apps/monitoring/scripts/publish_dashboards.py --check
 ```
 
 From an elevated Windows PowerShell session:

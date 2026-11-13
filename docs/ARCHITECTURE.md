@@ -61,7 +61,7 @@ Longhorn remains outside k3s. A native Windows Exporter service reports whole-wo
 
 ### Workstation inference
 
-Longhorn exposes an authenticated OpenAI-compatible API at `http://longhorn.local:19331/v1` to devices on the home LAN. A user systemd service in WSL runs llama.cpp's model router, loading one model at a time and releasing model memory after 30 idle minutes. Windows provides LAN forwarding and a logon task that keeps WSL available; stopping the inference service releases the GPU for gaming. Configuration, model selection, client setup, and lifecycle limits are documented in [INFERENCE.md](INFERENCE.md).
+Longhorn exposes an authenticated OpenAI-compatible API at `http://longhorn.local:19331/v1` to devices on the home LAN. A user systemd service in WSL runs llama.cpp's model router, loading one model at a time and releasing model memory after 30 idle minutes. Windows provides LAN forwarding and a logon task that keeps WSL available; stopping the inference service releases the GPU for gaming. The owned files are in [`apps/inference`](../apps/inference); configuration, model selection, client setup, and lifecycle limits are documented in [INFERENCE.md](INFERENCE.md).
 
 ## Availability and recovery
 
