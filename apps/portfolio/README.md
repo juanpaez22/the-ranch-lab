@@ -1,30 +1,45 @@
-# Portfolio Site
+# Portfolio experiment
 
-This is a one-off local-LLM experiment for a personal portfolio website.
+This disposable portfolio is a one-off local-LLM experiment, not a core Ranch service. `portfolio.html` and the Kubernetes resources in this directory are the versioned source of truth. Kustomize generates a content-hashed ConfigMap so HTML changes trigger a rollout.
 
-## Setup
-1. Ensure you have the image at the path specified in `local/portfolio/config.json`.
-2. Run the build script:
-   ```bash
-   python3 create_portfolio.py
-   ```
-3. Deploy to Kubernetes:
-   ```bash
-   kubectl apply -f portfolio-deployment.yaml
-   kubectl rollout restart deployment/portfolio -n portfolio
-   ```
+The page loads Tailwind CSS and Google Fonts from the Internet at runtime. Without those services, the content remains available but styling may be incomplete.
 
-## Private-Asset Handling
-Personal assets (like headshots) are not stored in this repository. The build script reads the asset from a local path defined in `local/portfolio/config.json` and embeds it as a Base64 string in the final `index.html`.
+## Prerequisites and private asset
 
-## Validation
-*   **Build**: Check `final_portfolio.html` for embedded image.
-*   **Deployment**: `kubectl get pods -n portfolio`
+- A working Ranch `kubectl` context.
+- Optional headshot at ignored path `local/portfolio/headshot.jpg`.
 
-## Rollback/Removal
-*   **Rollback**: `kubectl rollout undo deployment/portfolio -n portfolio`
-*   **Removal**: `kubectl delete -f portfolio-deployment.yaml` and `kubectl delete namespace portfolio`
+Never embed private assets in HTML or committed manifests. If the optional image exists, create or update its Secret:
 
-## Audit Information
-*   **Generated Assets**: `final_portfolio.html`, `portfolio-deployment.yaml`.
-*   **Configuration**: `local/portfolio/config.json` (ignored from git).
+```bash
+kubectl apply -f apps/portfolio/namespace.yaml
+kubectl -n portfolio create secret generic portfolio-private-assets \
+  --from-file=headshot.jpg=local/portfolio/headshot.jpg \
+  --dry-run=client -o yaml | kubectl apply -f -
+```
+
+Without the Secret, the page displays initials instead.
+
+## Preview, apply, and validate
+
+```bash
+kubectl kustomize apps/portfolio
+kubectl diff -k apps/portfolio
+kubectl apply -k apps/portfolio
+kubectl -n portfolio rollout status deployment/portfolio --timeout=180s
+kubectl -n portfolio get deployment,pod,service -o wide
+curl --fail --show-error --head http://bronco.local:32627/
+```
+
+The fixed NodePort is available through either cluster node. WSL may require a private address from ignored local configuration when mDNS is unavailable.
+
+## Update, rollback, and removal
+
+Edit `portfolio.html`, inspect `kubectl diff -k apps/portfolio`, and apply the kustomization. To roll back, restore the prior Git revision and reapply it.
+
+Remove the experiment and its optional Secret with:
+
+```bash
+kubectl delete -k apps/portfolio
+kubectl -n portfolio delete secret portfolio-private-assets --ignore-not-found
+```

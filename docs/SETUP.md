@@ -6,6 +6,7 @@ Repeatable procedures for the current [architecture](ARCHITECTURE.md). Run only 
 - [K3s installation](#k3s-installation)
 - [Cluster administration](#cluster-administration)
 - [First application: IT-Tools](#first-application-it-tools)
+- [Portfolio experiment](#portfolio-experiment)
 - [Prometheus host monitoring](#prometheus-host-monitoring)
 - [Longhorn Windows host monitoring](#longhorn-windows-host-monitoring)
 - [Longhorn GPU monitoring](#longhorn-gpu-monitoring)
@@ -277,6 +278,10 @@ kubectl delete -k apps/it-tools
 ```
 
 Confirm the namespace is gone and `http://bronco.local/` no longer routes to the application. Reapplying the kustomization recreates it from Git.
+
+## Portfolio experiment
+
+The portfolio is a disposable local-LLM experiment exposed on a fixed NodePort, separate from the core ingress path. Its app README documents the source of truth, optional private asset, apply, validation, rollback, and removal procedures: [apps/portfolio/README.md](../apps/portfolio/README.md).
 
 ## Prometheus host monitoring
 

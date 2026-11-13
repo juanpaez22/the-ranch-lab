@@ -47,6 +47,8 @@ Administration uses SSH and private kubeconfig copies. Standalone kubectl works 
 
 IT-Tools is the first application, deployed from [apps/it-tools](../apps/it-tools). It has one stateless replica, a ClusterIP Service, and a hostless Traefik Ingress. The hostless rule is suitable while it is the only application using that route; assign explicit hostnames before sharing the ingress with more applications.
 
+The [portfolio](../apps/portfolio) is a disposable local-LLM experiment, not a core Ranch dependency. It runs one stateless nginx replica and uses a fixed NodePort on both cluster nodes. Versioned HTML is projected through a Kustomize-generated ConfigMap, and an optional untracked headshot is supplied through a Kubernetes Secret. The experiment depends on public Tailwind CSS and Google Fonts services for full styling.
+
 ### Host monitoring
 
 Prometheus runs on Bronco as a pinned standalone Helm release, with Node Exporter on both Linux nodes and kube-state-metrics on Bronco. It collects host metrics and Kubernetes object state every 30 seconds, retaining up to 48 hours on a node-local PVC. Node Exporter listens on host TCP 9100; the Prometheus UI/API is reached through localhost port-forwarding.

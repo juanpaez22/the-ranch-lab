@@ -49,7 +49,8 @@
     <section class="min-h-screen flex flex-col justify-center items-center px-6 text-center">
         <div class="relative mb-8">
             <div class="absolute -inset-4 bg-indigo-500/20 rounded-full blur-2xl"></div>
-            <img src="linkedin_headshot.jpg" alt="Juan Paez" class="relative w-32 h-32 rounded-full object-cover border-2 border-white/20 shadow-2xl">
+            <div class="absolute inset-0 flex items-center justify-center rounded-full bg-slate-700 text-3xl font-semibold text-slate-200">JP</div>
+            <img src="assets/private/headshot.jpg" alt="Juan Paez" class="relative w-32 h-32 rounded-full object-cover border-2 border-white/20 shadow-2xl" onerror="this.hidden=true">
         </div>
         <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
             Juan <span class="gradient-text">Paez</span>
@@ -61,9 +62,8 @@
             Architecting high-performance infrastructure for large-scale AI workloads and distributed systems.
         </p>
         <div class="flex space-x-6 text-sm">
-            <a href="https://github.com/juanpaez22" target="_blank" class="hover:text-white transition">GitHub</a>
-            <a href="https://linkedin.com/in/juanpaez22" target="_blank" class="hover:text-white transition">LinkedIn</a>
-            <a href="mailto:jfpaez22@gmail.com" class="hover:text-white transition">Email</a>
+            <a href="https://github.com/juanpaez22" target="_blank" rel="noopener noreferrer" class="hover:text-white transition">GitHub</a>
+            <a href="https://linkedin.com/in/juanpaez22" target="_blank" rel="noopener noreferrer" class="hover:text-white transition">LinkedIn</a>
         </div>
     </section>
 
@@ -71,7 +71,7 @@
         <h2 class="text-3xl font-bold mb-12 text-center">Experience</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <!-- Card 1: Amazon -->
-            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+            <div class="card-container" role="button" tabindex="0" aria-pressed="false" onclick="toggleCard(this)" onkeydown="handleCardKey(event, this)">
                 <div class="card-inner">
                     <div class="card-front">
                         <div class="text-indigo-400 text-xs font-bold tracking-widest uppercase mb-4">Amazon AGI</div>
@@ -92,7 +92,7 @@
             </div>
 
             <!-- Card 2: Microsoft -->
-            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+            <div class="card-container" role="button" tabindex="0" aria-pressed="false" onclick="toggleCard(this)" onkeydown="handleCardKey(event, this)">
                 <div class="card-inner">
                     <div class="card-front">
                         <div class="text-purple-400 text-xs font-bold tracking-widest uppercase mb-4">Microsoft</div>
@@ -113,7 +113,7 @@
             </div>
 
             <!-- Card 3: Research -->
-            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+            <div class="card-container" role="button" tabindex="0" aria-pressed="false" onclick="toggleCard(this)" onkeydown="handleCardKey(event, this)">
                 <div class="card-inner">
                     <div class="card-front">
                         <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">Research</div>
@@ -138,7 +138,7 @@
         <h2 class="text-3xl font-bold mb-12 text-center">Projects & Research</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Card 4: SC20 -->
-            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+            <div class="card-container" role="button" tabindex="0" aria-pressed="false" onclick="toggleCard(this)" onkeydown="handleCardKey(event, this)">
                 <div class="card-inner">
                     <div class="card-front">
                         <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">High-Perf Computing</div>
@@ -158,7 +158,7 @@
             </div>
 
             <!-- Card 5: NJIT -->
-            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+            <div class="card-container" role="button" tabindex="0" aria-pressed="false" onclick="toggleCard(this)" onkeydown="handleCardKey(event, this)">
                 <div class="card-inner">
                     <div class="card-front">
                         <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">IoT Research</div>
@@ -178,7 +178,7 @@
             </div>
 
             <!-- Card 7: Edge CV -->
-            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+            <div class="card-container" role="button" tabindex="0" aria-pressed="false" onclick="toggleCard(this)" onkeydown="handleCardKey(event, this)">
                 <div class="card-inner">
                     <div class="card-front">
                         <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">Edge AI</div>
@@ -198,7 +198,7 @@
             </div>
 
             <!-- Card 6: UT Research -->
-            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+            <div class="card-container" role="button" tabindex="0" aria-pressed="false" onclick="toggleCard(this)" onkeydown="handleCardKey(event, this)">
                 <div class="card-inner">
                     <div class="card-front">
                         <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">Bio-Signal Analysis</div>
@@ -211,7 +211,7 @@
                         <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
                             <li>Evaluated BCI model performance.</li>
                             <li>Analyzed NICU telemetry data.</li>
-                            <li class>Developed metrics for alarm fatigue.</li>
+                            <li>Developed metrics for alarm fatigue.</li>
                         </ul>
                     </div>
                 </div>
@@ -232,5 +232,19 @@
     <footer class="py-12 text-center text-gray-600 text-sm">
         <p>© 2026 Juan Paez. Architecting the foundations of intelligence.</p>
     </footer>
+    <script>
+        function toggleCard(card) {
+            const expanded = card.getAttribute('aria-pressed') === 'true';
+            card.classList.toggle('is-flipped', !expanded);
+            card.setAttribute('aria-pressed', String(!expanded));
+        }
+
+        function handleCardKey(event, card) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleCard(card);
+            }
+        }
+    </script>
 </body>
 </html>
