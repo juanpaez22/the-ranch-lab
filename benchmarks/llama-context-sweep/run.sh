@@ -304,7 +304,7 @@ while IFS=$'\t' read -r model_id label hf_ref quantization native_context; do
 
   printf '\n[%s] %s\n' "$(date -u +%H:%M:%S)" "$label"
   if [[ "$download" == true ]]; then
-    "$llama_cli" download -hf "$hf_ref"
+    "$llama_cli" download --no-mmproj -hf "$hf_ref"
   fi
 
   for context in "${contexts[@]}"; do

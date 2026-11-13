@@ -1,0 +1,4 @@
+model_id,label,hf_ref,quantization,native_context,configured_context,actual_context,status,repeat,prompt_tokens,generated_tokens,prompt_tps,generation_tps,total_seconds,gpu_memory_used_mib,gpu_memory_free_mib,finish_reason
+"qwen3.8-27b-q3-k-xl","Qwen3.8 27B Unsloth","unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL","UD-Q3_K_XL","262144","65536","65536","ok","1","290","1024","1098.1770261366132","50.59233335748379","20.510839808","14893","1085","length"
+"qwen3.8-27b-q3-k-xl","Qwen3.8 27B Unsloth","unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL","UD-Q3_K_XL","262144","65536","65536","ok","2","290","1024","1484.4693789799137","50.80274293096966","20.498662912","14893","1085","length"
+"qwen3.8-27b-q3-k-xl","Qwen3.8 27B Unsloth","unsloth/Qwen3.8-27B-GGUF:UD-Q3_K_XL","UD-Q3_K_XL","262144","65536","65536","ok","3","290","1024","1433.4508103940013","50.57409007794194","20.441871872","14893","1085","length"

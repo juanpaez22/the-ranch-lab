@@ -45,7 +45,7 @@ Each run creates a timestamped directory under `results/` containing:
 
 Compare the median `generation_tps` for successful repetitions. Also inspect `generated_tokens` and `finish_reason`; a very short completion is a weaker throughput sample. `prompt_tps` uses uncached prompt evaluation but the portfolio prompt is small, so it should not be generalized to long-prompt ingestion.
 
-Quantization is part of the result. The Gemma models use official Q4_0 files to match the already-downloaded 26B-A4B model. Qwen3.8 uses its official Q4_K_M file because the ggml-org repository does not publish a base-model Q4_0 file. GPT-OSS uses the publisher's native MXFP4 weights, so its result is not a controlled comparison of weight quantizers with Gemma.
+Quantization is part of the result. The Gemma models use official Q4_0 files to match the already-downloaded 26B-A4B model. Qwen3.8 includes the official Q4_K_M file plus Unsloth's UD-IQ4_XS and UD-Q3_K_XL files so their fit and throughput can be compared on the same GPU. GPT-OSS uses the publisher's native MXFP4 weights, so its result is not a controlled comparison of weight quantizers with Gemma.
 
 The script skips requested contexts above a model's published native ceiling. It records load failures, request failures, and any actual-context mismatch rather than silently lowering the requested size. A failed request or response missing timing fields stops that point and releases the server; resume can retry the incomplete point. Resume mode requires the same host, GPU and driver, llama.cpp build, prompt, model manifest, repetition target, output-token limit, and recorded inference settings so incompatible measurements are not mixed.
 

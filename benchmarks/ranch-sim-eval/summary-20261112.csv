@@ -1,0 +1,4 @@
+model,profile,phase,prompt_tokens,completion_tokens,prompt_seconds,generation_seconds,generation_tps,finish_reason,passed,total,error
+qwen3.8-27b-iq4-xs-64k,8k,initial,8363,2923,5.44,128.24,22.78,stop,16,16,
+qwen3.8-27b-iq4-xs-64k,32k,initial,32162,3196,28.72,189.50,16.86,stop,16,16,
+qwen3.8-27b-iq4-xs-64k,60k,initial,60063,2912,44.63,219.07,13.29,stop,16,16,

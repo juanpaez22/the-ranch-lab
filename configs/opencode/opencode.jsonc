@@ -21,7 +21,7 @@
       "models": {
         "gemma-4-26b-a4b-q4": {
           "modelID": "gemma-4-26b-a4b-q4",
-          "name": "Gemma 4 26B-A4B Q4_0",
+          "name": "[LOCAL] Gemma 4 26B-A4B Q4_0 128K",
           "capabilities": {
             "tools": true,
             "input": ["text"],
@@ -38,35 +38,63 @@
         },
         "gemma-4-e4b-q4": {
           "modelID": "gemma-4-e4b-q4",
-          "name": "Gemma 4 E4B Q4_0",
+          "name": "[LOCAL] Gemma 4 E4B Q4_0 128K",
           "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
           "limit": { "context": 131072, "input": 122880, "output": 8192 },
           "compatibility": { "reasoningField": "reasoning_content" }
         },
         "gemma-4-12b-q4": {
           "modelID": "gemma-4-12b-q4",
-          "name": "Gemma 4 12B Q4_0",
+          "name": "[LOCAL] Gemma 4 12B Q4_0 128K",
           "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
           "limit": { "context": 131072, "input": 122880, "output": 8192 },
           "compatibility": { "reasoningField": "reasoning_content" }
         },
         "gemma-4-31b-q4": {
           "modelID": "gemma-4-31b-q4",
-          "name": "Gemma 4 31B Q4_0 (CPU offload)",
+          "name": "[LOCAL] Gemma 4 31B Q4_0 128K (CPU offload)",
           "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
           "limit": { "context": 131072, "input": 122880, "output": 8192 },
           "compatibility": { "reasoningField": "reasoning_content" }
         },
         "qwen3.8-27b-q4": {
           "modelID": "qwen3.8-27b-q4",
-          "name": "Qwen3.8 27B Q4_K_M (CPU offload)",
+          "name": "[LOCAL] Qwen3.8 27B Q4_K_M 128K (CPU offload)",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 131072, "input": 122880, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
+        },
+        "qwen3.8-27b-iq4-xs-64k": {
+          "modelID": "qwen3.8-27b-iq4-xs-64k",
+          "name": "[LOCAL] Qwen3.8 27B UD-IQ4_XS 64K",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 65536, "input": 57344, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
+        },
+        "qwen3.8-27b-q3-k-xl-32k": {
+          "modelID": "qwen3.8-27b-q3-k-xl-32k",
+          "name": "[LOCAL] Qwen3.8 27B UD-Q3_K_XL 32K",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 32768, "input": 24576, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
+        },
+        "qwen3.8-27b-q3-k-xl-64k": {
+          "modelID": "qwen3.8-27b-q3-k-xl-64k",
+          "name": "[LOCAL] Qwen3.8 27B UD-Q3_K_XL 64K",
+          "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
+          "limit": { "context": 65536, "input": 57344, "output": 8192 },
+          "compatibility": { "reasoningField": "reasoning_content" }
+        },
+        "qwen3.8-27b-q3-k-xl-128k": {
+          "modelID": "qwen3.8-27b-q3-k-xl-128k",
+          "name": "[LOCAL] Qwen3.8 27B UD-Q3_K_XL 128K",
           "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
           "limit": { "context": 131072, "input": 122880, "output": 8192 },
           "compatibility": { "reasoningField": "reasoning_content" }
         },
         "gpt-oss-20b-mxfp4": {
           "modelID": "gpt-oss-20b-mxfp4",
-          "name": "GPT-OSS 20B MXFP4",
+          "name": "[LOCAL] GPT-OSS 20B MXFP4 128K",
           "capabilities": { "tools": true, "input": ["text"], "output": ["text"] },
           "limit": { "context": 131072, "input": 122880, "output": 8192 },
           "compatibility": { "reasoningField": "reasoning_content" }

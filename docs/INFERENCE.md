@@ -89,27 +89,23 @@ The installed presets use cached instruction-tuned GGUFs, text input/output, Fla
 | `gemma-4-12b-q4` | Gemma 4 12B Q4_0 | OpenCode tool-use issue noted below |
 | `gemma-4-31b-q4` | Gemma 4 31B Q4_0 | Substantial CPU offload on this GPU |
 | `qwen3.8-27b-q4` | Qwen3.8 27B Q4_K_M | Substantial CPU offload on this GPU |
+| `qwen3.8-27b-iq4-xs-64k` | Qwen3.8 27B Unsloth UD-IQ4_XS | 64K evaluation candidate; substantially faster than Q4_K_M |
+| `qwen3.8-27b-q3-k-xl-32k` | Qwen3.8 27B Unsloth UD-Q3_K_XL | 32K interactive diagnostic preset |
+| `qwen3.8-27b-q3-k-xl-64k` | Qwen3.8 27B Unsloth UD-Q3_K_XL | 64K daily-driver candidate |
+| `qwen3.8-27b-q3-k-xl-128k` | Qwen3.8 27B Unsloth UD-Q3_K_XL | 128K stress-test preset; monitor desktop responsiveness |
 | `gpt-oss-20b-mxfp4` | GPT-OSS 20B MXFP4 | 128K reasoning/coding alternative; benchmarked below |
 
-All current presets allocate one 128K slot. The model's native ceiling, the server allocation, and the client's request budget are separate limits. OpenCode declares 131,072 total tokens, up to 122,880 input tokens, and up to 8,192 output tokens, with automatic conversation compaction. Change client and server limits together, and verify the actual allocation through `/props?model=<id>`. The default model supports up to 256K natively; E4B's ceiling is 128K.
+Most presets allocate one 128K slot. The Qwen evaluation presets expose explicit 32K, 64K, or 128K allocations, with 8,192 tokens reserved for output in each matching OpenCode entry. The model's native ceiling, the server allocation, and the client's request budget are separate limits. Change client and server limits together, and verify the actual allocation through `/props?model=<id>`. The default model supports up to 256K natively; E4B's ceiling is 128K.
 
 OpenCode assembles instructions, conversation, files, and tool results into each request. The model produces text or tool calls; OpenCode executes permitted tools and sends their results back. Files and stored chat history persist independently of the model's KV cache.
 
 ### OpenCode
 
-The versioned [provider configuration](../configs/opencode/opencode.jsonc) contains all six model entries. It reads authentication from `~/.config/llama.cpp/api.key` rather than embedding a credential.
+The versioned [provider configuration](../configs/opencode/opencode.jsonc) contains ten model entries. Human-readable names follow `[LOCAL] Model Quant Context (optional notes)`, while stable preset IDs remain lowercase and script-friendly. The configuration reads authentication from `~/.config/llama.cpp/api.key` rather than embedding a credential.
 
-Select a model through `/models` in the interactive client, or pass its provider/model ID:
+OpenCode does not select these presets through a top-level `--model` option. Start OpenCode, enter `/models`, and choose the desired `[LOCAL]` entry. The current session switches to that entry without changing the configured default.
 
-```bash
-opencode --model llama-cpp/gemma-4-e4b-q4
-```
-
-GPT-OSS is available without changing the default:
-
-```bash
-opencode --model llama-cpp/gpt-oss-20b-mxfp4
-```
+The Q3_K_XL choices appear as 32K, 64K, and 128K entries. Prefer 64K for the first real-session test. The 32K preset isolates context-related stalls, while 128K is a stress test with known WSL responsiveness risk from earlier large-context experiments.
 
 Ensure `~/.opencode/bin` is on PATH, or use `~/.opencode/bin/opencode` directly. Restart existing OpenCode sessions after installing configuration changes.
 
@@ -147,7 +143,7 @@ ctx-size = 32768
 
 Its OpenCode entry must declare a 32,768-token context budget. Model-specific settings inherit from `[*]`; router command-line arguments take precedence over presets. Keep settings that vary by model in the preset file.
 
-The original [context benchmark](INFERENCE_BENCHMARK_2026_10_11.md) records throughput across context allocations. The later [GPT-OSS comparison](INFERENCE_BENCHMARK_2026_10_31.md) adds fresh 4K/128K measurements and a small coding evaluation against the Gemma default. Neither is a general quality ranking or a filled-context benchmark. To repeat the throughput test, stop the router, run [the benchmark harness](../benchmarks/llama-context-sweep/README.md), and start the router again afterward.
+The original [context benchmark](INFERENCE_BENCHMARK_2026_10_11.md) records throughput across context allocations. The [GPT-OSS comparison](INFERENCE_BENCHMARK_2026_10_31.md) adds fresh 4K/128K measurements and coding evaluations against the Gemma default. The [Qwen IQ4_XS follow-up](INFERENCE_BENCHMARK_2026_11_12.md) compares the smaller Unsloth artifact with the earlier Q4_K_M result at 16K, 32K, and 64K. None is a general quality ranking or, except where explicitly stated in the simulator report, a filled-context benchmark. To repeat the throughput test, stop the router, run [the benchmark harness](../benchmarks/llama-context-sweep/README.md), and start the router again afterward.
 
 ## Installation
 
@@ -310,11 +306,10 @@ curl --fail -H "Authorization: Bearer $inference_key" \
 
 Confirm `n_ctx` is 131072 and `total_slots` is 1. An unauthenticated `/v1/models` request should return HTTP 401. Repeat health and an authenticated completion from another LAN machine using `longhorn.local` and a securely supplied copy of the key.
 
-Test the complete client tool loop from the target repository:
+Test the complete client tool loop from the target repository by starting OpenCode, selecting `[LOCAL] Gemma 4 26B-A4B Q4_0 128K` through `/models`, and entering:
 
-```bash
-opencode run --standalone --model llama-cpp/gemma-4-26b-a4b-q4 \
-  "Use the read tool to read README.md. Do not edit anything. Reply with only its first Markdown heading."
+```text
+Use the read tool to read README.md. Do not edit anything. Reply with only its first Markdown heading.
 ```
 
 Local OpenCode tool use, authenticated LAN inference from bronco and yeti, streaming from yeti, model switching, explicit unload, idle sleep/wake, and service stop/start have been exercised. Detailed outcomes are in [the daily log](../logs/2026_10_30.md). Large filled-context behavior, full workstation lifecycle recovery, and sustained agent reliability remain separate tests.
