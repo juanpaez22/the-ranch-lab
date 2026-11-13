@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juan Paez | Systems for the Era of Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #e5e5e5; }
+        .gradient-text {
+            background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card-container {
+            perspective: 1000px;
+            height: 320px;
+            cursor: pointer;
+        }
+        .card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-container.is-flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%;
+            -webkit-backface-visibility: hidden; backface-visibility: hidden;
+            border-radius: 1.5rem; padding: 2rem;
+        }
+        .card-front {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        .card-back {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            transform: rotateY(180deg);
+            display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+            overflow-y: auto;
+        }
+        .card-back::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="antialiased">
+    <section class="min-h-screen flex flex-col justify-center items-center px-6 text-center">
+        <div class="relative mb-8">
+            <div class="absolute -inset-4 bg-indigo-500/20 rounded-full blur-2xl"></div>
+            <img src="linkedin_headshot.jpg" alt="Juan Paez" class="relative w-32 h-32 rounded-full object-cover border-2 border-white/20 shadow-2xl">
+        </div>
+        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
+            Juan <span class="gradient-text">Paez</span>
+        </h1>
+        <h2 class="text-xl md:text-2xl font-light text-gray-400 tracking-[0.2em] uppercase mb-8">
+            Systems for the Era of Intelligence
+        </h2>
+        <p class="text-gray-500 max-w-lg text-sm md:text-base mb-10 leading-relaxed">
+            Architecting high-performance infrastructure for large-scale AI workloads and distributed systems.
+        </p>
+        <div class="flex space-x-6 text-sm">
+            <a href="https://github.com/juanpaez22" target="_blank" class="hover:text-white transition">GitHub</a>
+            <a href="https://linkedin.com/in/juanpaez22" target="_blank" class="hover:text-white transition">LinkedIn</a>
+            <a href="mailto:jfpaez22@gmail.com" class="hover:text-white transition">Email</a>
+        </div>
+    </section>
+
+    <section class="py-24 max-w-5xl mx-auto px-6">
+        <h2 class="text-3xl font-bold mb-12 text-center">Experience</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Card 1: Amazon -->
+            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="text-indigo-400 text-xs font-bold tracking-widest uppercase mb-4">Amazon AGI</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Scaling AI Infrastructure</h3>
+                        <p class="text-gray-500 text-sm">Orchestrating massive-scale GPU compute.</p>
+                        <div class="mt-6 text-indigo-400 text-xs font-semibold uppercase tracking-tighter">Click to expand</div>
+                    </div>
+                    <div class="card-back">
+                        <h3 class="text-lg font-bold text-white mb-4">AGI Infrastructure (SDE II)</h3>
+                        <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                            <li>Managed 10,000s of GPUs in training fleets.</li>
+                            <li>Built K8s sub-node GPU request systems.</li>
+                            <li>Optimized S3 read-through caching.</li>
+                            <li>Automated 500+ node remediations.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Microsoft -->
+            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="text-purple-400 text-xs font-bold tracking-widest uppercase mb-4">Microsoft</div>
+                        <h3 class="text-xl font-bold text-white mb-2">AI Frameworks</h3>
+                        <p class="text-gray-500 text-sm">Hardware-Software Co-Design.</p>
+                        <div class="mt-6 text-purple-400 text-xs font-semibold uppercase tracking-tighter">Click to expand</div>
+                    </div>
+                    <div class="card-back">
+                        <h3 class="text-lg font-bold text-white mb-4">Senior SWE (AI Frameworks)</h3>
+                        <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                            <li>Core runtime for Maia AI accelerator.</li>
+                            <li>Achieved nanosecond-scale synchronization.</li>
+                            <li>Led device-side profiling stack.</li>
+                            <li>Validated LLM workloads on physical HW.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Research -->
+            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">Research</div>
+                        <h3 class="text-xl font-bold text-white mb-2">High-Perf Systems</h3>
+                        <p class="text-gray-500 text-sm">Optimizing compute at the edge.</p>
+                        <div class="mt-6 text-pink-400 text-xs font-semibold uppercase tracking-tighter">Click to expand</div>
+                    </div>
+                    <div class="card-back">
+                        <h3 class="text-lg font-bold text-white mb-4">Systems & Research</h3>
+                        <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                            <li>SC20 Cluster Competition (Azure).</li>
+                            <li>Visible-light localization for IoT.</li>
+                            <li>Edge CV: MobileNet optimization.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 max-w-5xl mx-auto px-6">
+        <h2 class="text-3xl font-bold mb-12 text-center">Projects & Research</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Card 4: SC20 -->
+            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">High-Perf Computing</div>
+                        <h3 class="text-xl font-bold text-white mb-2">SC20 Cluster Competition</h3>
+                        <p class="text-gray-500 text-sm">Optimizing scientific workloads on Azure.</p>
+                        <div class="mt-6 text-pink-400 text-xs font-semibold uppercase tracking-tighter">Click to expand</div>
+                    </div>
+                    <div class="card-back">
+                        <h3 class="text-lg font-bold text-white mb-4">SC20 Cluster Competition</h3>
+                        <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                            <li>Built a Slurm-based HPC cluster on Azure.</li>
+                            <li>Optimized scientific workloads.</li>
+                            <li>Placed 6th overall in competition.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: NJIT -->
+            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">IoT Research</div>
+                        <h3 class="text-xl font-bold text-white mb-2">Visible-Light Localization</h3>
+                        <p class="text-gray-500 text-sm">Precision tracking for IoT devices.</p>
+                        <div class="mt-6 text-pink-400 text-xs font-semibold uppercase tracking-tighter">Click to expand</div>
+                    </div>
+                    <div class="card-back">
+                        <h3 class="text-lg font-bold text-white mb-4">NJIT Research</h3>
+                        <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                            <li>Prototyped electronics-free tags.</li>
+                            <li>Achieved centimeter-level accuracy.</li>
+                            <li>Published in IEEE INFOCOM.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 7: Edge CV -->
+            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">Edge AI</div>
+                        <h3 class="text-xl font-bold text-white mb-2">MobileNet Optimization</h3>
+                        <p class="text-gray-500 text-sm">Low-power computer vision for edge.</p>
+                        <div class="mt-6 text-pink-400 text-xs font-semibold uppercase tracking-tighter">Click to expand</div>
+                    </div>
+                    <div class="card-back">
+                        <h3 class="text-lg font-bold text-white mb-4">Edge CV Project</h3>
+                        <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                            <li>Compressed MobileNet for Raspberry Pi.</li>
+                            <li>Achieved 4ms latency per image.</li>
+                            <li>Maintained >70% accuracy.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 6: UT Research -->
+            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="text-pink-400 text-xs font-bold tracking-widest uppercase mb-4">Bio-Signal Analysis</div>
+                        <h3 class="text-xl font-bold text-white mb-2">EEG Model Performance</h3>
+                        <p class="text-gray-500 text-sm">Evaluating brain-computer interfaces.</p>
+                        <div class="mt-6 text-pink-400 text-xs font-semibold uppercase tracking-tighter">Click to expand</div>
+                    </div>
+                    <div class="card-back">
+                        <h3 class="text-lg font-bold text-white mb-4">UT Research</h3>
+                        <ul class="text-sm text-gray-300 space-y-3 list-disc list-inside">
+                            <li>Evaluated BCI model performance.</li>
+                            <li>Analyzed NICU telemetry data.</li>
+                            <li class>Developed metrics for alarm fatigue.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 bg-indigo-500/5 border-y border-indigo-500/10 text-center px-6">
+        <h2 class="text-3xl font-bold mb-12">Core Expertise</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-5xl mx-auto text-gray-400">
+            <div class="p-4 border border-white/10 rounded-xl"><span class="block text-white font-semibold">Orchestration</span><span class="text-xs">K8s, Scale</span></div>
+            <div class="p-4 border border-white/10 rounded-xl"><span class="block text-white font-semibold">Co-Design</span><span class="text-xs">Hardware/SW</span></div>
+            <div class="p-4 border border-white/10 rounded-xl"><span class="block text-white font-semibold">Performance</span><span class="text-xs">Latency, Throughput</span></div>
+            <div class="p-4 border border-white/10 rounded-xl"><span class="block text-white font-semibold">Observability</span><span class="text-xs">Telemetry, Metrics</span></div>
+        </div>
+    </section>
+
+    <footer class="py-12 text-center text-gray-600 text-sm">
+        <p>© 2026 Juan Paez. Architecting the foundations of intelligence.</p>
+    </footer>
+</body>
+</html>
