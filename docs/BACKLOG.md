@@ -5,7 +5,7 @@ Ideas are candidates, not commitments. Move items forward when there is a useful
 ## Next steps
 
 - [x] Deploy a disposable application and verify cross-node pod networking, cluster DNS, and LAN ingress. On 2026-09-19, traffic entered through Traefik on bronco and reached IT-Tools on yeti; both the external ingress request and an in-cluster service-DNS request returned HTTP 200.
-- [ ] Set up Pi-hole on the standalone Raspberry Pi as the next homelab platform project. Give it a reserved address, create friendly application names under `apps.home.arpa`, and configure the RAX45 to forward DNS to it. Candidate names include `inference.apps.home.arpa`, `grafana.apps.home.arpa`, and `home.apps.home.arpa`. DNS supplies names; ingress or forwarding still determines the service port and destination. Validate resolution from ordinary LAN devices as well as lab hosts, and document outage behavior and rollback before making it the household resolver. Keep it outside k3s initially so a cluster outage does not also disrupt household DNS.
+- [ ] Review the [home DNS proposal](DNS_PROPOSAL.md). It recommends a one-client, DNS-only Pi-hole pilot as a standalone container on Bronco, with DHCP left on the RAX45, names under `home.arpa`, and explicit Ingress rules for web applications. This is not yet an adopted deployment decision. Resolve the router's DNS handoff, Bronco port 53, Docker/k3s coexistence, outage behavior, and rollback before implementation or household rollout.
 - [ ] Test service placement, node downtime, and recovery.
 - [ ] Review live firewall rules and scope cluster access to lab peers.
 - [ ] Recheck network stability if the brief SSH/cluster interruption recurs; its cause remains unknown.
